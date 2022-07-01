@@ -1,0 +1,102 @@
+2022-06-15 08:40:35,020 - 100-100-0.003-2-100 - [INFO] - {'process_data': False, 'train': True, 'inference': False, 'run_analysis': False, 'data_dir': '../data/FB15K-237_20', 'model_dir': 'D:\\Documents\\codes\\python\\KnowledgeGraph\\LinkPredict\\SAC_KGR\\model\\FB15K-237_20-embed.conve-RV-100-100-0.003-2-100', 'model_root_dir': 'D:\\Documents\\codes\\python\\KnowledgeGraph\\LinkPredict\\SAC_KGR\\model', 'log_dir': 'D:\\Documents\\codes\\python\\KnowledgeGraph\\LinkPredict\\SAC_KGR\\log', 'checkpoint_path': None, 'gpu': -1, 'seed': 543, 'best_dev_metrics': 0.0, 'add_reverse_relations': True, 'add_reversed_training_edges': True, 'emb_dropout_rate': 0.3, 'group_examples_by_query': True, 'entity_dim': 100, 'relation_dim': 100, 'history_dim': 200, 'history_num_layers': 3, 'use_action_space_bucketing': False, 'bucket_interval': 10, 'learning_rate': 0.003, 'actor_learning_rate': 0.001, 'critic_learning_rate': 0.001, 'eof_learning_rate': 0.001, 'num_epochs': 2, 'num_wait_epochs': 100, 'num_peek_epochs': 1, 'start_epoch': 0, 'train_batch_size': 128, 'eval_batch_size': 32, 'buffer_batch_size': 64, 'train_freq': (1, 'step'), 'gradient_steps': 1, 'grad_norm': 0.0, 'hidden_dropout_rate': 0.3, 'feat_dropout_rate': 0.2, 'emb_2D_d1': 10, 'emb_2D_d2': 10, 'num_out_channels': 32, 'kernel_size': 3, 'label_smoothing_epsilon': 0.1, 'num_negative_samples': 100, 'theta': 0.2, 'model_name': 'embed.conve', 'num_rollouts': 1, 'num_rollout_steps': 3, 'bandwidth': 300, 'buffer_size': 2000, 'beta': 0.0, 'gamma': 1, 'tau': 0.005, 'learning_starts': 300, 'target_update_interval': 3, 'baseline': 'na', 'ff_dropout_rate': 0.1, 'rnn_dropout_rate': 0.0, 'action_dropout_rate': 0.1, 'activation_fn': 'relu', 'net_arch': [64, 64], 'verbose': 0, 'fn_state_dict_path': '', 'fn_kg_state_dict_path': '', 'reward_shaping_threshold': 0, 'mu': 1.0, 'beam_size': 128, 'visualize_paths': False, 'save_beam_search_paths': False, 'device': device(type='cpu')}
+2022-06-15 08:40:40,854 - 100-100-0.003-2-100 - [INFO] - 
+Model Parameters
+2022-06-15 08:40:40,854 - 100-100-0.003-2-100 - [INFO] - --------------------------
+2022-06-15 08:40:40,854 - 100-100-0.003-2-100 - [INFO] - kg.entity_embeddings.weight	1454300	requires_grad=True
+2022-06-15 08:40:40,854 - 100-100-0.003-2-100 - [INFO] - kg.relation_embeddings.weight	47700	requires_grad=True
+2022-06-15 08:40:40,854 - 100-100-0.003-2-100 - [INFO] - mdl.b	14543	requires_grad=True
+2022-06-15 08:40:40,854 - 100-100-0.003-2-100 - [INFO] - mdl.conv1.weight	288	requires_grad=True
+2022-06-15 08:40:40,854 - 100-100-0.003-2-100 - [INFO] - mdl.conv1.bias	32	requires_grad=True
+2022-06-15 08:40:40,854 - 100-100-0.003-2-100 - [INFO] - mdl.bn0.weight	1	requires_grad=True
+2022-06-15 08:40:40,854 - 100-100-0.003-2-100 - [INFO] - mdl.bn0.bias	1	requires_grad=True
+2022-06-15 08:40:40,854 - 100-100-0.003-2-100 - [INFO] - mdl.bn1.weight	32	requires_grad=True
+2022-06-15 08:40:40,854 - 100-100-0.003-2-100 - [INFO] - mdl.bn1.bias	32	requires_grad=True
+2022-06-15 08:40:40,854 - 100-100-0.003-2-100 - [INFO] - mdl.bn2.weight	100	requires_grad=True
+2022-06-15 08:40:40,854 - 100-100-0.003-2-100 - [INFO] - mdl.bn2.bias	100	requires_grad=True
+2022-06-15 08:40:40,854 - 100-100-0.003-2-100 - [INFO] - mdl.fc.weight	460800	requires_grad=True
+2022-06-15 08:40:40,855 - 100-100-0.003-2-100 - [INFO] - mdl.fc.bias	100	requires_grad=True
+2022-06-15 08:40:40,855 - 100-100-0.003-2-100 - [INFO] - Total # parameters = 1978029
+2022-06-15 08:40:40,855 - 100-100-0.003-2-100 - [INFO] - --------------------------
+2022-06-15 08:40:40,881 - 100-100-0.003-2-100 - [INFO] - Epoch 0: 
+2022-06-15 08:41:19,952 - 100-100-0.003-2-100 - [INFO] - Epoch 0: average training loss = 0.022389522908787336
+2022-06-15 08:41:21,797 - 100-100-0.003-2-100 - [INFO] - Dev set performance for tail prediction: (correct evaluation)
+2022-06-15 08:41:22,234 - 100-100-0.003-2-100 - [INFO] - examples size: 17535
+2022-06-15 08:41:22,303 - 100-100-0.003-2-100 - [INFO] - Hits@1 = 0.05623039635015683
+2022-06-15 08:41:22,304 - 100-100-0.003-2-100 - [INFO] - Hits@3 = 0.06638152266894781
+2022-06-15 08:41:22,304 - 100-100-0.003-2-100 - [INFO] - Hits@5 = 0.11303108069575135
+2022-06-15 08:41:22,304 - 100-100-0.003-2-100 - [INFO] - Hits@10 = 0.12380952380952381
+2022-06-15 08:41:22,304 - 100-100-0.003-2-100 - [INFO] - MRR = 0.08024801889907271
+2022-06-15 08:41:24,068 - 100-100-0.003-2-100 - [INFO] - Dev set performance for head prediction: (correct evaluation)
+2022-06-15 08:41:24,605 - 100-100-0.003-2-100 - [INFO] - examples size: 17535
+2022-06-15 08:41:24,653 - 100-100-0.003-2-100 - [INFO] - Hits@1 = 0.0018249215854006272
+2022-06-15 08:41:24,653 - 100-100-0.003-2-100 - [INFO] - Hits@3 = 0.004733390362132877
+2022-06-15 08:41:24,653 - 100-100-0.003-2-100 - [INFO] - Hits@5 = 0.004904476760764186
+2022-06-15 08:41:24,653 - 100-100-0.003-2-100 - [INFO] - Hits@10 = 0.009067579127459367
+2022-06-15 08:41:24,653 - 100-100-0.003-2-100 - [INFO] - MRR = 0.005070732444221013
+2022-06-15 08:41:24,655 - 100-100-0.003-2-100 - [INFO] - Dev set performance: (correct evaluation)
+2022-06-15 08:41:24,655 - 100-100-0.003-2-100 - [INFO] - Hits@1 = 0.029027658967778727
+2022-06-15 08:41:24,655 - 100-100-0.003-2-100 - [INFO] - Hits@3 = 0.03555745651554035
+2022-06-15 08:41:24,656 - 100-100-0.003-2-100 - [INFO] - Hits@5 = 0.05896777872825777
+2022-06-15 08:41:24,656 - 100-100-0.003-2-100 - [INFO] - Hits@10 = 0.06643855146849159
+2022-06-15 08:41:24,656 - 100-100-0.003-2-100 - [INFO] - MRR = 0.04265937567164686
+2022-06-15 08:41:24,663 - 100-100-0.003-2-100 - [INFO] - => best model updated 'D:\Documents\codes\python\KnowledgeGraph\LinkPredict\SAC_KGR\model\FB15K-237_20-embed.conve-RV-100-100-0.003-2-100\model_best.tar'
+2022-06-15 08:41:24,663 - 100-100-0.003-2-100 - [INFO] - Epoch 1: 
+2022-06-15 08:41:50,423 - 100-100-0.003-2-100 - [INFO] - Epoch 1: average training loss = 0.010597141319138229
+2022-06-15 08:41:52,379 - 100-100-0.003-2-100 - [INFO] - Dev set performance for tail prediction: (correct evaluation)
+2022-06-15 08:41:52,797 - 100-100-0.003-2-100 - [INFO] - examples size: 17535
+2022-06-15 08:41:52,858 - 100-100-0.003-2-100 - [INFO] - Hits@1 = 0.04345594525235244
+2022-06-15 08:41:52,858 - 100-100-0.003-2-100 - [INFO] - Hits@3 = 0.07065868263473053
+2022-06-15 08:41:52,858 - 100-100-0.003-2-100 - [INFO] - Hits@5 = 0.08428856572569147
+2022-06-15 08:41:52,858 - 100-100-0.003-2-100 - [INFO] - Hits@10 = 0.117821499857428
+2022-06-15 08:41:52,858 - 100-100-0.003-2-100 - [INFO] - MRR = 0.06850474089290925
+2022-06-15 08:41:54,845 - 100-100-0.003-2-100 - [INFO] - Dev set performance for head prediction: (correct evaluation)
+2022-06-15 08:41:55,377 - 100-100-0.003-2-100 - [INFO] - examples size: 17535
+2022-06-15 08:41:55,420 - 100-100-0.003-2-100 - [INFO] - Hits@1 = 0.0019389791844881665
+2022-06-15 08:41:55,420 - 100-100-0.003-2-100 - [INFO] - Hits@3 = 0.004904476760764186
+2022-06-15 08:41:55,420 - 100-100-0.003-2-100 - [INFO] - Hits@5 = 0.008326204733390363
+2022-06-15 08:41:55,420 - 100-100-0.003-2-100 - [INFO] - Hits@10 = 0.00992301112061591
+2022-06-15 08:41:55,420 - 100-100-0.003-2-100 - [INFO] - MRR = 0.0052185384921239275
+2022-06-15 08:41:55,422 - 100-100-0.003-2-100 - [INFO] - Dev set performance: (correct evaluation)
+2022-06-15 08:41:55,422 - 100-100-0.003-2-100 - [INFO] - Hits@1 = 0.022697462218420304
+2022-06-15 08:41:55,422 - 100-100-0.003-2-100 - [INFO] - Hits@3 = 0.037781579697747356
+2022-06-15 08:41:55,422 - 100-100-0.003-2-100 - [INFO] - Hits@5 = 0.04630738522954092
+2022-06-15 08:41:55,422 - 100-100-0.003-2-100 - [INFO] - Hits@10 = 0.06387225548902195
+2022-06-15 08:41:55,422 - 100-100-0.003-2-100 - [INFO] - MRR = 0.036861639692516594
+2022-06-15 08:41:55,574 - 100-100-0.003-2-100 - [INFO] - => loading checkpoint from 'D:\Documents\codes\python\KnowledgeGraph\LinkPredict\SAC_KGR\model\FB15K-237_20-embed.conve-RV-100-100-0.003-2-100\model_best.tar'
+2022-06-15 08:42:00,724 - 100-100-0.003-2-100 - [INFO] - examples size: 20466
+2022-06-15 08:42:00,803 - 100-100-0.003-2-100 - [INFO] - Hits@1 = 0.05555555555555555
+2022-06-15 08:42:00,803 - 100-100-0.003-2-100 - [INFO] - Hits@3 = 0.06752662953190658
+2022-06-15 08:42:00,803 - 100-100-0.003-2-100 - [INFO] - Hits@5 = 0.11243037232483143
+2022-06-15 08:42:00,803 - 100-100-0.003-2-100 - [INFO] - Hits@10 = 0.12391283103684159
+2022-06-15 08:42:00,803 - 100-100-0.003-2-100 - [INFO] - MRR = 0.07967687273593438
+2022-06-15 08:42:01,482 - 100-100-0.003-2-100 - [INFO] - examples size: 20466
+2022-06-15 08:42:01,538 - 100-100-0.003-2-100 - [INFO] - Hits@1 = 0.0021987686895338612
+2022-06-15 08:42:01,538 - 100-100-0.003-2-100 - [INFO] - Hits@3 = 0.005374767907749438
+2022-06-15 08:42:01,538 - 100-100-0.003-2-100 - [INFO] - Hits@5 = 0.00547249096061761
+2022-06-15 08:42:01,538 - 100-100-0.003-2-100 - [INFO] - Hits@10 = 0.008941659337437702
+2022-06-15 08:42:01,538 - 100-100-0.003-2-100 - [INFO] - MRR = 0.0055060215095134495
+2022-06-15 08:42:01,540 - 100-100-0.003-2-100 - [INFO] - Tail Hits@1 = 0.05555555555555555	Head Hits@1 = 0.0021987686895338612	Hits@1 = 0.02887716212254471
+2022-06-15 08:42:01,540 - 100-100-0.003-2-100 - [INFO] - Tail Hits@3 = 0.06752662953190658	Head Hits@3 = 0.005374767907749438	Hits@3 = 0.036450698719828006
+2022-06-15 08:42:01,540 - 100-100-0.003-2-100 - [INFO] - Tail Hits@5 = 0.11243037232483143	Head Hits@5 = 0.00547249096061761	Hits@5 = 0.05895143164272452
+2022-06-15 08:42:01,540 - 100-100-0.003-2-100 - [INFO] - Tail Hits@10 = 0.12391283103684159	Head Hits@10 = 0.008941659337437702	Hits@10 = 0.06642724518713965
+2022-06-15 08:42:01,540 - 100-100-0.003-2-100 - [INFO] - Tail MRR = 0.07967687273593438	Head MRR = 0.0055060215095134495	MRR = 0.04259144712272391
+2022-06-17 04:21:09,958 - 100-100-0.003-2-100 - [INFO] - {'process_data': False, 'train': True, 'inference': False, 'run_analysis': False, 'data_dir': '../data/FB15K-237_20', 'model_dir': 'D:\\Documents\\codes\\python\\KnowledgeGraph\\LinkPredict\\SAC_KGR\\model\\FB15K-237_20-embed.conve-RV-100-100-0.003-2-100', 'model_root_dir': 'D:\\Documents\\codes\\python\\KnowledgeGraph\\LinkPredict\\SAC_KGR\\model', 'log_dir': 'D:\\Documents\\codes\\python\\KnowledgeGraph\\LinkPredict\\SAC_KGR\\log', 'checkpoint_path': None, 'gpu': 0, 'seed': 543, 'best_dev_metrics': 0.0, 'add_reverse_relations': True, 'add_reversed_training_edges': True, 'emb_dropout_rate': 0.3, 'group_examples_by_query': False, 'entity_dim': 100, 'relation_dim': 100, 'history_dim': 200, 'history_num_layers': 3, 'use_action_space_bucketing': False, 'bucket_interval': 10, 'learning_rate': 0.003, 'actor_learning_rate': 0.001, 'critic_learning_rate': 0.001, 'eof_learning_rate': 0.001, 'num_epochs': 2, 'num_wait_epochs': 100, 'num_peek_epochs': 1, 'start_epoch': 0, 'train_batch_size': 4, 'eval_batch_size': 32, 'buffer_batch_size': 4, 'train_freq': (2, 'episode'), 'gradient_steps': 1, 'grad_norm': 0.0, 'hidden_dropout_rate': 0.3, 'feat_dropout_rate': 0.2, 'emb_2D_d1': 10, 'emb_2D_d2': 10, 'num_out_channels': 32, 'kernel_size': 3, 'label_smoothing_epsilon': 0.1, 'num_negative_samples': 100, 'conve_state_dict_path': '../model/FB15K-237_20-embed.conve-RV-100-100-0.003-2-100/model_best.tar', 'theta': 0.2, 'model_name': 'embed.conve', 'num_rollouts': 1, 'num_rollout_steps': 3, 'bandwidth': 300, 'buffer_size': 2000, 'replay_buffer_class': 'ReplayBuffer', 'beta': 0.0, 'gamma': 1, 'tau': 0.005, 'learning_starts': 2, 'target_update_interval': 3, 'ent_coef': 'auto_0.01', 'share_features_extractor': False, 'target_entropy': 'auto', 'n_critics': 1, 'policy_class': 'SACPolicy', 'baseline': 'na', 'ff_dropout_rate': 0.1, 'rnn_dropout_rate': 0.0, 'action_dropout_rate': 0.1, 'activation_fn': 'relu', 'net_arch': [64, 64], 'verbose': 0, 'fn_state_dict_path': '', 'fn_kg_state_dict_path': '', 'reward_shaping_threshold': 0, 'mu': 1.0, 'beam_size': 128, 'mask_test_false_negatives': False, 'visualize_paths': False, 'save_beam_search_paths': False, 'remark': '', 'device': device(type='cuda', index=0)}
+2022-06-17 04:21:31,863 - 100-100-0.003-2-100 - [INFO] - 
+Model Parameters
+2022-06-17 04:21:31,863 - 100-100-0.003-2-100 - [INFO] - --------------------------
+2022-06-17 04:21:31,863 - 100-100-0.003-2-100 - [INFO] - kg.entity_embeddings.weight	1454300	requires_grad=True
+2022-06-17 04:21:31,863 - 100-100-0.003-2-100 - [INFO] - kg.relation_embeddings.weight	47700	requires_grad=True
+2022-06-17 04:21:31,864 - 100-100-0.003-2-100 - [INFO] - mdl.b	14543	requires_grad=True
+2022-06-17 04:21:31,864 - 100-100-0.003-2-100 - [INFO] - mdl.conv1.weight	288	requires_grad=True
+2022-06-17 04:21:31,864 - 100-100-0.003-2-100 - [INFO] - mdl.conv1.bias	32	requires_grad=True
+2022-06-17 04:21:31,864 - 100-100-0.003-2-100 - [INFO] - mdl.bn0.weight	1	requires_grad=True
+2022-06-17 04:21:31,864 - 100-100-0.003-2-100 - [INFO] - mdl.bn0.bias	1	requires_grad=True
+2022-06-17 04:21:31,864 - 100-100-0.003-2-100 - [INFO] - mdl.bn1.weight	32	requires_grad=True
+2022-06-17 04:21:31,864 - 100-100-0.003-2-100 - [INFO] - mdl.bn1.bias	32	requires_grad=True
+2022-06-17 04:21:31,864 - 100-100-0.003-2-100 - [INFO] - mdl.bn2.weight	100	requires_grad=True
+2022-06-17 04:21:31,864 - 100-100-0.003-2-100 - [INFO] - mdl.bn2.bias	100	requires_grad=True
+2022-06-17 04:21:31,864 - 100-100-0.003-2-100 - [INFO] - mdl.fc.weight	460800	requires_grad=True
+2022-06-17 04:21:31,864 - 100-100-0.003-2-100 - [INFO] - mdl.fc.bias	100	requires_grad=True
+2022-06-17 04:21:31,864 - 100-100-0.003-2-100 - [INFO] - Total # parameters = 1978029
+2022-06-17 04:21:31,864 - 100-100-0.003-2-100 - [INFO] - --------------------------
+2022-06-17 04:21:31,918 - 100-100-0.003-2-100 - [INFO] - Epoch 0: 
