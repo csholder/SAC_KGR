@@ -111,7 +111,7 @@ def initialize_model_directory(args):
             args.remark
         )
     elif 'dqn' in args.model_name:
-        hyperparam_sig = '{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}'.format(
+        hyperparam_sig = '{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}'.format(
             args.baseline,
             args.entity_dim,
             args.relation_dim,
@@ -128,6 +128,8 @@ def initialize_model_directory(args):
             args.exploration_initial_eps,
             args.exploration_final_eps,
             args.exploration_fraction,
+            args.boltzmann_exploration,
+            args.temperature,
             args.target_update_interval,
             args.bandwidth,
             args.beta,
@@ -137,6 +139,7 @@ def initialize_model_directory(args):
             args.group_examples_by_query,
             args.add_reversed_training_edges,
             args.relation_only,
+            args.beam_search_with_q_value,
             args.remark
         )
     else:
@@ -299,9 +302,12 @@ def construct_model(args):
             exploration_fraction=args.exploration_fraction,
             exploration_initial_eps=args.exploration_initial_eps,
             exploration_final_eps=args.exploration_final_eps,
+            boltzmann_exploration=args.boltzmann_exploration,
+            temperature=args.temperature,
             max_grad_norm=args.grad_norm,
             xavier_initialization=args.xavier_initialization,
             relation_only=args.relation_only,
+            beam_search_with_q_value=args.beam_search_with_q_value,
         )
         if args.use_wandb:
             wandb.config = {
@@ -326,6 +332,8 @@ def construct_model(args):
             'exploration_fraction': args.exploration_fraction,
             'exploration_initial_eps': args.exploration_initial_eps,
             'exploration_final_eps': args.exploration_final_eps,
+            'boltzmann_exploration': args.boltzmann_exploration,
+            'temperature': args.temperature,
             'max_grad_norm': args.grad_norm,
             'xavier_initialization': args.xavier_initialization,
             'relation_only': args.relation_only,
@@ -344,7 +352,10 @@ def get_checkpoint_path(args):
 
 def train(args, lf):
     train_path = data_utils.get_train_path(args)
-    dev_path = os.path.join(args.data_dir, 'dev.txt')
+    if args.eval_with_train:
+        dev_path = os.path.join(args.data_dir, 'dev_from_train.txt')
+    else:
+        dev_path = os.path.join(args.data_dir, 'dev.txt')
     entity_index_path = os.path.join(args.data_dir, 'entity2id.txt')
     relation_index_path = os.path.join(args.data_dir, 'relation2id.txt')
     train_data = data_utils.load_triples(

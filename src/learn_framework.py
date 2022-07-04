@@ -84,7 +84,7 @@ class LFramework(nn.Module):
             self.logger.info('Epoch {}: '.format(epoch_id))
             self.train()
 
-            # random.shuffle(train_data)
+            random.shuffle(train_data)
 
             if self.run_analysis:
                 self.rewards = None
@@ -146,8 +146,12 @@ class LFramework(nn.Module):
                 self.logger.info('* Analysis: false negative ratio = {}'.format(fn_ratio))
 
             if self.run_analysis or (epoch_id % self.num_peek_epochs == 0):
-                tail_dev_data = [dev_data[idx * 2] for idx in range(len(dev_data) // 2)]
-                head_dev_data = [dev_data[idx * 2 + 1] for idx in range(len(dev_data) // 2)]
+                if args.eval_with_train:
+                    tail_dev_data = [train_data[idx * 2] for idx in range(len(train_data) // 2)]
+                    head_dev_data = [train_data[idx * 2 + 1] for idx in range(len(train_data) // 2)]
+                else:
+                    tail_dev_data = [dev_data[idx * 2] for idx in range(len(dev_data) // 2)]
+                    head_dev_data = [dev_data[idx * 2 + 1] for idx in range(len(dev_data) // 2)]
                 tail_dev_scores, _ = self.forward(tail_dev_data, verbose=False)
                 self.logger.info('Dev set performance for tail prediction: (correct evaluation)')
                 h1_t, h3_t, h5_t, h10_t, mrr_t, _, _, _, _, _ = hits_and_ranks(tail_dev_data, tail_dev_scores,
@@ -168,9 +172,9 @@ class LFramework(nn.Module):
                 self.logger.info('MRR = {}'.format(mrr))
 
                 if self.args.use_wandb:
-                    wandb.log({'hits@1': (h1_t + h1_h) / 2})
-                    wandb.log({'hits@3': (h3_t + h3_h) / 2})
-                    wandb.log({'hits@5': (h5_t + h5_h) / 2})
+                    # wandb.log({'hits@1': (h1_t + h1_h) / 2})
+                    # wandb.log({'hits@3': (h3_t + h3_h) / 2})
+                    # wandb.log({'hits@5': (h5_t + h5_h) / 2})
                     wandb.log({'hits@10': (h10_t + h10_h) / 2})
                     wandb.log({'mrr': mrr})
                 # Action dropout anneaking

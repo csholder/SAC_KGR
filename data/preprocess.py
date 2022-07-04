@@ -1,4 +1,6 @@
 import os
+import random
+
 import numpy as np
 
 
@@ -92,6 +94,18 @@ def build_raw_pgrk(data_dir):
             fout.write('{}\t:{}\n'.format(entity, degree))
 
 
+def extract_train_examples_as_eval(data_dir):
+    train_triples = []
+    with open(os.path.join(data_dir, 'train.txt'), 'r', encoding='utf-8') as fin:
+        for line in fin:
+            train_triples.append(line.strip())
+
+    dev_triples = random.sample(train_triples, k=17535)
+    with open(os.path.join(data_dir, 'dev_from_train.txt'), 'w', encoding='utf-8') as fout:
+        for triple in dev_triples:
+            fout.write(triple + '\n')
+
+
 if __name__ == '__main__':
     data_dir = os.path.join('.', 'FB15k-237_20')
     # data_dir = os.path.join('.', 'FB15k-237_40')
@@ -118,8 +132,10 @@ if __name__ == '__main__':
     # data_dir = os.path.join('.', 'FB15K-237-6-0-10000-0.1-5-0.8-0.1-0.5-sparse-long_for-specific-task-all')
     # data_dir = os.path.join('.', 'NELL-995-gen-6-0-20000-0.01-10-0.8-0.01-0.05-sparse-long_for-specific-task-all')
     # transfer_hrt_to_htr(data_dir)
-    build_raw_pgrk(data_dir)
+    # build_raw_pgrk(data_dir)
 
     # data_dir = os.path.join('.', 'inferwiki-16k')
     # data_dir = os.path.join('.', 'inferwiki-16k-long')
     # build_raw_pgrk(data_dir)
+
+    extract_train_examples_as_eval(data_dir)

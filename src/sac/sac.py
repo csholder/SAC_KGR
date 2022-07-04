@@ -248,6 +248,7 @@ class SAC(OffPolicyAlgorithm):
             loss_dict["ent_coef_loss"] = np.mean(ent_coef_losses)
 
         if self.args.use_wandb:
+            wandb.log({'ent_coef': loss_dict["ent_coef"]})
             wandb.log({'actor_loss': loss_dict["actor_loss"]})
             wandb.log({'critic_loss': loss_dict["critic_loss"]})
             wandb.log({'ent_coef_losses': loss_dict["ent_coef_loss"]})
