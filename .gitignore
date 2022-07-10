@@ -4,3 +4,22 @@
 *.md
 model
 old_version
+
+# Python Cache
+__pycache__
+
+# Editor
+.idea/
+.vscode/
+
+# Large Files
+data/
+model/
+
+# Log
+log/
+sbatch_output/
+wandb/
+
+# Scripts
+*.slurm
