@@ -2,6 +2,9 @@
 *.xml
 *.xlsx
 *.md
+*7z
+SAC_KGR/
+
 model
 old_version
 
