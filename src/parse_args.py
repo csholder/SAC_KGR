@@ -144,6 +144,7 @@ parser.add_argument('--target_update_interval', type=int, default=3)
 parser.add_argument('--ent_coef', type=str, default='auto_0.01')
 parser.add_argument('--share_features_extractor', action='store_true')
 parser.add_argument('--target_entropy', type=str, default='auto')
+parser.add_argument('--action_entropy_ratio', type=float, default=0.8)
 parser.add_argument('--n_critics', type=int, default=1)
 
 

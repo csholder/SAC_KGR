@@ -3,7 +3,6 @@ import torch as th
 from src.common.common_class import Observation
 
 
-
 def get_ground_truth_edge_mask(e, r_space, e_space, e_s, q, e_t, kg):
     ground_truth_edge_mask = \
         ((e == e_s).unsqueeze(1) * (r_space == q.unsqueeze(1)) * (e_space == e_t.unsqueeze(1)))

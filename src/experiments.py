@@ -65,7 +65,7 @@ def initialize_model_directory(args):
             args.remark,
         )
     elif 'sac' in args.model_name:
-        hyperparam_sig = '{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}'.format(
+        hyperparam_sig = '{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}'.format(
             args.baseline,
             args.entity_dim,
             args.relation_dim,
@@ -85,6 +85,7 @@ def initialize_model_directory(args):
             args.emb_dropout_rate,
             args.ff_dropout_rate,
             args.action_dropout_rate,
+            args.action_entropy_ratio,
             args.bandwidth,
             args.beta,
             args.run_analysis,
@@ -283,11 +284,46 @@ def construct_model(args):
             ent_coef=args.ent_coef,
             target_update_interval=args.target_update_interval,
             target_entropy=args.target_entropy,
+            action_entropy_ratio=args.action_entropy_ratio,
             max_grad_norm=args.grad_norm,
             replay_buffer_class=args.replay_buffer_class,
             policy_class=args.policy_class,
             verbose=args.verbose,
         )
+        if args.use_wandb:
+            wandb.config = {
+            'entity_dim': args.entity_dim,
+            'relation_dim': args.relation_dim,
+            'history_dim': args.history_dim,
+            'history_num_layers': args.history_num_layers,
+            'learning_rate': args.critic_learning_rate,
+            'actor_learning_rate': args.actor_learning_rate,
+            'critic_learning_rate': args.critic_learning_rate,
+            'eof_learning_rate': args.eof_learning_rate,
+            'buffer_size': args.buffer_size,
+            'buffer_batch_size': args.buffer_batch_size,
+            'learning_starts': args.learning_starts,
+            'ff_dropout_rate': args.ff_dropout_rate,
+            'action_dropout_rate': args.action_dropout_rate,
+            'tau': args.tau,
+            'gamma': args.gamma,
+            'train_freq_value': args.train_freq_value,
+            'train_freq_unit': args.train_freq_unit,
+            'policy_class': args.policy_class,
+            'replay_buffer_class': args.replay_buffer_class,
+            'gradient_steps': args.gradient_steps,
+            'target_update_interval': args.target_update_interval,
+            'target_entropy': args.target_entropy,
+            'action_entropy_ratio': args.action_entropy_ratio,
+            'exploration_fraction': args.exploration_fraction,
+            'exploration_initial_eps': args.exploration_initial_eps,
+            'exploration_final_eps': args.exploration_final_eps,
+            'boltzmann_exploration': args.boltzmann_exploration,
+            'temperature': args.temperature,
+            'max_grad_norm': args.grad_norm,
+            'xavier_initialization': args.xavier_initialization,
+            'relation_only': args.relation_only,
+        }
     elif args.model_name.startswith('rl.pg'):
         lf = PolicyGradient(
             args,

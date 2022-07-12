@@ -42,6 +42,7 @@ class SAC(OffPolicyAlgorithm):
         ent_coef: Union[str, float] = 'auto',
         target_update_interval: int = 1,
         target_entropy: Union[str, float] = 'auto',
+        action_entropy_ratio: float = 0.8,
         max_grad_norm: float = 0.,
         replay_buffer_class: Union[str, ReplayBuffer] = None,
         replay_buffer_kwargs: Optional[Dict[str, Any]] = None,
@@ -78,6 +79,7 @@ class SAC(OffPolicyAlgorithm):
         self.action_dropout_rate = action_dropout_rate
         self.actor_learning_rate = actor_learning_rate
         self.target_entropy = target_entropy
+        self.action_entropy_ratio = action_entropy_ratio
         self.log_ent_coef = None  # type: Optional[th.Tensor]
         self.eof_learning_rate = eof_learning_rate
         self.ent_coef_optimizer = None
@@ -115,12 +117,13 @@ class SAC(OffPolicyAlgorithm):
             # automatically set target entropy if needed
             # self.target_entropy = -np.prod(self.kg.max_num_actions).astype(np.float32)
             # https://github.com/p-christ/Deep-Reinforcement-Learning-Algorithms-with-PyTorch/blob/master/agents/actor_critic_agents/SAC_Discrete.py
-            self.target_entropy = np.log(self.kg.max_num_actions).astype(np.float32) * 0.98
+            self.target_entropy = np.log(self.kg.max_num_actions).astype(np.float32) * self.action_entropy_ratio
         else:
             # Force conversion
             # this will also throw an error for unexpected string
             self.target_entropy = float(self.target_entropy)
 
+        self.logger.info('Entropy low threshold: {}'.format(self.target_entropy))
         # The entropy coefficient or entropy can be learned automatically
         # see Automating Entropy Adjustment for Maximum Entropy RL section
         # of https://arxiv.org/abs/1812.05905
@@ -142,12 +145,12 @@ class SAC(OffPolicyAlgorithm):
             self.ent_coef_tensor = th.tensor(float(self.ent_coef)).to(self.device)
 
             # Setup optimizer with initial learning rate
-            self.critic_optimizer = self.optimizer_class(filter(lambda p: p.requires_grad, self.critic.parameters()),
-                                                         lr=self.critic_learning_rate, **self.optimizer_kwargs)
+        self.critic_optimizer = self.optimizer_class(filter(lambda p: p.requires_grad, self.critic.parameters()),
+                                                     lr=self.critic_learning_rate, **self.optimizer_kwargs)
 
-            # Setup optimizer with initial learning rate
-            self.actor_optimizer = self.optimizer_class(filter(lambda p: p.requires_grad, self.actor.parameters()),
-                                                        lr=self.actor_learning_rate, **self.optimizer_kwargs)
+        # Setup optimizer with initial learning rate
+        self.actor_optimizer = self.optimizer_class(filter(lambda p: p.requires_grad, self.actor.parameters()),
+                                                    lr=self.actor_learning_rate, **self.optimizer_kwargs)
 
     def _create_aliases(self) -> None:
         self.actor = self.policy.actor
@@ -157,24 +160,23 @@ class SAC(OffPolicyAlgorithm):
     def _predict_action_dist(
         self,
         obs: Observation,
-        use_action_space_bucketing=True,
         merge_aspace_batching_outcome=True,
     ):
-        return self.actor.action_distribution(obs, self.kg, use_action_space_bucketing, merge_aspace_batching_outcome)
+        return self.actor.action_distribution(obs, self.kg, self.use_action_space_bucketing, merge_aspace_batching_outcome)
 
     def do_train(self, gradient_steps: int, batch_size: int = 64):
         self.train()
         # Switch to train mode (this affects batch norm / dropout)
         self.policy.set_training_mode(True)
         # Update optimizers learning rate
-        optimizers = [self.actor.optimizer, self.critic.optimizer]
+        optimizers = [self.actor_optimizer, self.critic_optimizer]
         if self.ent_coef_optimizer is not None:
             optimizers += [self.ent_coef_optimizer]
 
         # Update learning rate according to lr schedule
         # self._update_learning_rate(optimizers)
 
-        ent_coef_losses, ent_coefs = [], []
+        ent_coef_losses, ent_coefs, action_entropies = [], [], []
         actor_losses, critic_losses = [], []
 
         for gradient_step in range(gradient_steps):
@@ -182,23 +184,32 @@ class SAC(OffPolicyAlgorithm):
             replay_data = self.replay_buffer.sample(batch_size)
 
             # Action by the current actor for the sampled state
-            sample_outcome = self.actor.action_prob(replay_data.observation, kg=self.kg,
-                                                    use_action_space_bucketing=self.use_action_space_bucketing)
+            # sample_outcome = self.actor.action_prob(replay_data.observation, kg=self.kg,
+            #                                         use_action_space_bucketing=self.use_action_space_bucketing)
+            action_space, action_dist = self.actor.action_distribution(replay_data.observation, kg=self.kg, 
+                                                                       use_action_space_bucketing=self.use_action_space_bucketing,
+                                                                       merge_aspace_batching_outcome=True)
 
-            action_pi, prob = sample_outcome['action_sample'], sample_outcome['action_prob']
-            log_prob = utils.safe_log(prob)
-
+            # action_pi, prob = sample_outcome['action_sample'], sample_outcome['action_prob']
+            # log_prob = utils.safe_log(prob)
+            action_mask = action_space[1]
+            log_action_dist = utils.safe_log(action_dist)
+            log_action_dist *= action_mask
+            
             ent_coef_loss = None
             if self.ent_coef_optimizer is not None:
                 # Important: detach the variable from the graph
                 # so we don't change it with other losses
                 # see https://github.com/rail-berkeley/softlearning/issues/60
-                ent_coef = th.exp(self.log_ent_coef.detach())
-                ent_coef_loss = -(self.log_ent_coef * (log_prob + self.target_entropy).detach()).mean()
+                ent_coef = th.exp(self.log_ent_coef)
+                # ent_coef_loss = -(self.log_ent_coef * (log_prob + self.target_entropy).detach()).mean()
+                ent_coef_loss = th.mul(action_dist.detach(), -(ent_coef * (log_action_dist.detach() + self.target_entropy))).sum(dim=-1).mean()
                 ent_coef_losses.append(ent_coef_loss.item())
             else:
                 ent_coef = self.ent_coef_tensor
 
+            entropy = -th.mul(action_dist.detach(), log_action_dist.detach()).sum(dim=-1).mean()
+            action_entropies.append(entropy.item())
             ent_coefs.append(ent_coef.item())
 
             # Optimize entropy coefficient, also called
@@ -208,6 +219,7 @@ class SAC(OffPolicyAlgorithm):
                 ent_coef_loss.backward()
                 self.ent_coef_optimizer.step()
 
+            ent_coef = th.exp(self.log_ent_coef.detach())
             with th.no_grad():
                 # Select action according to policy
                 next_sample_outcome = self.actor.action_prob(replay_data.next_observation, kg=self.kg,
@@ -240,9 +252,11 @@ class SAC(OffPolicyAlgorithm):
             # Compute actor loss
             # Alternative: actor_loss = th.mean(log_prob - qf1_pi)
             # Mean over all critic networks
-            current_action_embedding = utils.get_action_embedding(action_pi, self.kg)
-            min_qf_pi = self.critic.forward(replay_data.observation, current_action_embedding, self.kg)
-            actor_loss = (ent_coef * log_prob - min_qf_pi).mean()
+            # current_action_embedding = utils.get_action_embedding(action_pi, self.kg)
+            # min_qf_pi = self.critic.forward(replay_data.observation, current_action_embedding, self.kg)
+            # actor_loss = (ent_coef * log_prob - min_qf_pi).mean()
+            _, current_q_values_for_action_space = self.critic.calculate_q_values(replay_data.observation, self.kg, self.use_action_space_bucketing)
+            actor_loss = th.matmul(action_dist, (ent_coef.detach() * log_action_dist - current_q_values_for_action_space).t()).mean()
             actor_losses.append(actor_loss.item())
 
             # Optimize the actor
@@ -260,6 +274,7 @@ class SAC(OffPolicyAlgorithm):
         loss_dict["ent_coef"] = np.mean(ent_coefs)
         loss_dict["actor_loss"] = np.mean(actor_losses)
         loss_dict["critic_loss"] = np.mean(critic_losses)
+        loss_dict["action_entropy"] = np.mean(action_entropies)
         if len(ent_coef_losses) > 0:
             loss_dict["ent_coef_loss"] = np.mean(ent_coef_losses)
 
@@ -268,6 +283,7 @@ class SAC(OffPolicyAlgorithm):
             wandb.log({'actor_loss': loss_dict["actor_loss"]})
             wandb.log({'critic_loss': loss_dict["critic_loss"]})
             wandb.log({'ent_coef_losses': loss_dict["ent_coef_loss"]})
+            wandb.log({'action_entropy': loss_dict["action_entropy"]})
         return loss_dict
 
     def learn(
@@ -283,14 +299,13 @@ class SAC(OffPolicyAlgorithm):
         self,
         mini_batch: Tuple[th.Tensor, th.Tensor, th.Tensor],
         beam_size: int,
-        use_action_space_bucketing=True,
         verbose=False,
         query_path_dict=None,
     ):
         self.eval()
         with th.no_grad():
             e1, r, e2 = mini_batch
-            beam_search_output = self.beam_search(mini_batch, beam_size, use_action_space_bucketing=use_action_space_bucketing)
+            beam_search_output = self.beam_search(mini_batch, beam_size)
 
             pred_e2s = beam_search_output['pred_e2s']
             pred_e2_scores = beam_search_output['pred_e2_scores']
@@ -322,7 +337,6 @@ class SAC(OffPolicyAlgorithm):
         self,
         mini_batch,
         beam_size: int,
-        use_action_space_bucketing=True,
         save_beam_search_paths=False,
     ):
         e_s, q, e_t = mini_batch
@@ -421,7 +435,6 @@ class SAC(OffPolicyAlgorithm):
         self._last_obs = start_obs
         for t in range(self.num_rollout_steps):
             action_space, action_dist = self._predict_action_dist(self._last_obs,
-                                                                  use_action_space_bucketing,
                                                                   merge_aspace_batching_outcome=True)
             log_action_dist = log_action_prob.view(-1, 1) + utils.safe_log(action_dist)
 

@@ -5,6 +5,7 @@ import torch.nn.functional as F
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import src.common.utils as utils
+from src.common.policy_utils import get_action_space, get_action_space_in_buckets
 from src.common.common_class import Observation
 from src.common.common_class import MLPFeaturesExtractor
 from src.common.base_critic import BaseCritic
@@ -71,6 +72,43 @@ class Critic(BaseCritic):
             relation_only=relation_only,
         )
         self.action_dropout_rate = action_dropout_rate
+
+    def forward_batch(self, obs: Observation, actions: th.Tensor, kg) -> th.Tensor:
+        feature = self.feature_extractor(obs, kg)
+        qvalue_input = th.cat([feature.unsqueeze(dim=1).expand_as(actions), actions], dim=-1)
+        qvalues = th.cat(tuple(q_net(qvalue_input) for q_net in self.q_networks), dim=-1)
+        q_values, _ = th.min(qvalues, dim=-1)
+        return q_values
+
+    def predict_q_value_batch(self, observation: Observation, action_space, kg):
+        (r_space, e_space), action_mask = action_space
+        action_embeddings = utils.get_action_embedding((r_space, e_space), kg)
+        q_values = self.forward_batch(observation, action_embeddings, kg)
+        q_values = q_values - (1 - action_mask) * utils.HUGE_INT
+        return q_values, action_mask
+
+    def predict_action_dist_batch(self, observation: Observation, action_space, kg):
+        q_values, action_mask = self.predict_q_value_batch(observation, action_space, kg)
+        action_dist = F.softmax(q_values / self.temperature, dim=-1)
+        return action_dist, q_values, action_mask
+
+    def calculate_q_values(self, obs: Observation, kg, use_action_space_bucketing=False):
+        if use_action_space_bucketing:
+            references, next_r, next_e, q_values = [], [], [], []
+            db_action_spaces, db_references, db_observations = get_action_space_in_buckets(obs, kg)
+            for action_space_b, reference_b, obs_b in zip(db_action_spaces, db_references, db_observations):
+                q_values_b, _ = self.predict_q_value_batch(obs_b, action_space_b, kg)
+                references.extend(reference_b)
+                q_values.append(q_values_b)
+            inv_offset = [i for i, _ in sorted(enumerate(references), key=lambda x: x[1])]
+
+            action_space = utils.pad_and_cat_action_space(kg, db_action_spaces, inv_offset)
+            q_values = utils.pad_and_cat(q_values, padding_value=-utils.HUGE_INT)[inv_offset]
+        else:
+            action_space = get_action_space(obs, kg)
+            q_values, _ = self.predict_q_value_batch(obs, action_space, kg)
+        q_values *= action_space[1]
+        return action_space, q_values
 
 
 class SACPolicy(BasePolicy):
@@ -139,8 +177,6 @@ class SACPolicy(BasePolicy):
         # self.exploration_initial_eps = exploration_initial_eps
         # self.exploration_final_eps = exploration_final_eps
 
-        self.actor_learning_rate = actor_learning_rate
-        self.critic_learning_rate = critic_learning_rate
         self.share_features_extractor = share_features_extractor
 
         self._build()

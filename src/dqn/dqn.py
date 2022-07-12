@@ -239,12 +239,6 @@ class DQN(OffPolicyAlgorithm):
     def learn(
         self,
         mini_batch,
-        log_interval: int = 4,
-        eval_freq: int = -1,
-        n_eval_episodes: int = 5,
-        tb_log_name: str = "DQN",
-        eval_log_path: Optional[str] = None,
-        reset_num_timesteps: bool = True,
     ):
         if self.args.use_wandb:
             wandb.log({'exploration rate': self.policy.exploration_rate})
@@ -256,7 +250,6 @@ class DQN(OffPolicyAlgorithm):
         self,
         mini_batch,
         beam_size,
-        use_action_space_bucketing=True,
         verbose=False,
         query_path_dict=None
     ):
@@ -264,9 +257,9 @@ class DQN(OffPolicyAlgorithm):
         with th.no_grad():
             e1, e2, r = mini_batch
             if self.beam_search_with_q_value:
-                beam_search_output = self.beam_search_q_value(mini_batch, beam_size, use_action_space_bucketing=use_action_space_bucketing)
+                beam_search_output = self.beam_search_q_value(mini_batch, beam_size)
             else:
-                beam_search_output = self.beam_search_probability(mini_batch, beam_size, use_action_space_bucketing=use_action_space_bucketing)
+                beam_search_output = self.beam_search_probability(mini_batch, beam_size)
             pred_e2s = beam_search_output['pred_e2s']
             pred_e2_scores = beam_search_output['pred_e2_scores']
             if verbose:
@@ -295,7 +288,6 @@ class DQN(OffPolicyAlgorithm):
         self,
         mini_batch,
         beam_size: int,
-        use_action_space_bucketing=True,
         save_beam_search_paths=False,
     ):
         e_s, q, e_t = mini_batch
@@ -392,7 +384,7 @@ class DQN(OffPolicyAlgorithm):
             search_trace = [(r_s, e_s)]
         self._last_obs = start_obs
         for t in range(self.num_rollout_steps):
-            action_space, q_values = self.policy.calculate_q_values(self._last_obs, self.kg, use_action_space_bucketing)
+            action_space, q_values = self.policy.calculate_q_values(self._last_obs, self.kg, self.use_action_space_bucketing)
             if t == self.num_rollout_steps - 1:
                 action, q_value, action_offset = top_k_answer_unique(q_values, action_space)
             else:
@@ -437,7 +429,6 @@ class DQN(OffPolicyAlgorithm):
         self,
         mini_batch,
         beam_size: int,
-        use_action_space_bucketing=True,
         save_beam_search_paths=False,
     ):
         e_s, q, e_t = mini_batch
@@ -535,7 +526,7 @@ class DQN(OffPolicyAlgorithm):
             search_trace = [(r_s, e_s)]
         self._last_obs = start_obs
         for t in range(self.num_rollout_steps):
-            action_space, action_dist = self.policy.calculate_action_dist(self._last_obs, self.kg, use_action_space_bucketing,
+            action_space, action_dist = self.policy.calculate_action_dist(self._last_obs, self.kg, self.use_action_space_bucketing,
                                                                           merge_aspace_batching_outcome=True)
             log_action_dist = log_action_prob.view(-1, 1) + utils.safe_log(action_dist)
 

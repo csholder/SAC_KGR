@@ -126,7 +126,7 @@ class OffPolicyAlgorithm(LFramework):
             self.num_rollouts = train_freq[0]
             train_freq = (1, train_freq[1])
         self.train_freq = train_freq
-        assert buffer_size % (self.num_rollouts * self.train_batch_size) == 0
+        assert buffer_size % (self.num_rollouts * self.buffer_batch_size) == 0
 
         self.num_timesteps = 0
         self._episode_num = 0
@@ -260,7 +260,6 @@ class OffPolicyAlgorithm(LFramework):
     def sample_action(
         self,
         observation: Observation,
-        use_action_space_bucketing=False,
         deterministic=True,
     ):
         """
@@ -276,7 +275,7 @@ class OffPolicyAlgorithm(LFramework):
         :return: the model's action and the next hidden state
             (used in recurrent policies)
         """
-        return self.policy.predict(observation, self.kg, use_action_space_bucketing, deterministic=deterministic)
+        return self.policy.predict(observation, self.kg, self.use_action_space_bucketing, deterministic=deterministic)
 
     def _sample_next_step(
         self,
@@ -440,7 +439,6 @@ class OffPolicyAlgorithm(LFramework):
         self,
         mini_batch,
         beam_size: int,
-        use_action_space_bucketing=True,
         save_beam_search_paths=False,
     ):
         raise NotImplementedError

@@ -221,7 +221,6 @@ class LFramework(nn.Module):
                 pred_score = self.predict(mini_batch)
             else:
                 pred_score, query_path_dict = self.predict(mini_batch, beam_size=self.beam_size,
-                                                           use_action_space_bucketing=self.use_action_space_bucketing,
                                                            verbose=verbose, query_path_dict=query_path_dict)
             pred_scores.append(pred_score[:mini_batch_size])
         scores = torch.cat(pred_scores)

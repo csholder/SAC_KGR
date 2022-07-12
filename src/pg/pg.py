@@ -318,14 +318,13 @@ class PolicyGradient(LFramework):
         self,
         mini_batch,
         beam_size,
-        use_action_space_bucketing=True,
         verbose=False,
         query_path_dict=None
     ):
         self.eval()
         with torch.no_grad():
             e1, e2, r = mini_batch
-            beam_search_output = self.beam_search(mini_batch, beam_size, use_action_space_bucketing=use_action_space_bucketing)
+            beam_search_output = self.beam_search(mini_batch, beam_size)
             pred_e2s = beam_search_output['pred_e2s']
             pred_e2_scores = beam_search_output['pred_e2_scores']
             if verbose:
@@ -353,16 +352,14 @@ class PolicyGradient(LFramework):
     def _predict_action_dist(
         self,
         obs: Observation,
-        use_action_space_bucketing=False,
         merge_aspace_batching_outcome=False,
     ):
-        return self.policy.action_distribution(obs, self.kg, use_action_space_bucketing, merge_aspace_batching_outcome)
+        return self.policy.action_distribution(obs, self.kg, self.use_action_space_bucketing, merge_aspace_batching_outcome)
 
     def beam_search(
         self,
         mini_batch,
         beam_size: int,
-        use_action_space_bucketing=True,
         save_beam_search_paths=False,
     ):
         e_s, q, e_t = mini_batch
@@ -461,7 +458,6 @@ class PolicyGradient(LFramework):
         self._last_obs = start_obs
         for t in range(self.num_rollout_steps):
             action_space, action_dist = self._predict_action_dist(self._last_obs,
-                                                                  use_action_space_bucketing,
                                                                   merge_aspace_batching_outcome=True)
             log_action_dist = log_action_prob.view(-1, 1) + utils.safe_log(action_dist)
 
