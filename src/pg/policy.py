@@ -59,7 +59,6 @@ class OnPolicy(BasePolicy):
         net_arch: Optional[Union[List[int], Dict[str, List[int]]]],
         ff_dropout_rate: float = 0.1,
         action_dropout_rate: float = 0.5,
-        actor_learning_rate: float = 0.001,
         xavier_initialization: bool = True,
         relation_only: bool = False,
     ):
@@ -71,7 +70,6 @@ class OnPolicy(BasePolicy):
             activation_fn,
             net_arch=net_arch,
             ff_dropout_rate=ff_dropout_rate,
-            actor_learning_rate=actor_learning_rate,
             xavier_initialization=xavier_initialization,
             relation_only=relation_only,
         )
@@ -90,7 +88,6 @@ class OnPolicy(BasePolicy):
             'relation_only': relation_only,
         }
 
-        self.actor_learning_rate = actor_learning_rate
         self._build()
 
         print('========================== Policy ==========================')
@@ -101,7 +98,6 @@ class OnPolicy(BasePolicy):
         print('ff_dropout_rate: ', ff_dropout_rate)
         print('history_num_layers: ', history_num_layers)
         print('action_dropout_rate: ', action_dropout_rate)
-        print('actor_learning_rate: ', actor_learning_rate)
 
     def _build(self,):
         self.actor = self.make_actor()

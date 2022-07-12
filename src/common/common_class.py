@@ -196,13 +196,13 @@ class MLPFeaturesExtractor(nn.Module):
 
     def initialize_modules(self):
         if self._xavier_initialization:
-            nn.init.xavier_uniform_(self.W1.weight, 1.414)
-            nn.init.xavier_uniform_(self.W2.weight, 1.414)
+            nn.init.xavier_uniform_(self.W1.weight)
+            nn.init.xavier_uniform_(self.W2.weight)
             for name, param in self.path_encoder.named_parameters():
                 if 'bias' in name:
                     nn.init.constant_(param, 0.0)
                 elif 'weight' in name:
-                    nn.init.xavier_normal_(param, 1.414)
+                    nn.init.xavier_normal_(param)
                     # nn.init.constant_(param, 1.414)
 
 

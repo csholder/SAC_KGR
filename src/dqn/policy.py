@@ -87,10 +87,6 @@ class DQNPolicy(BasePolicy):
         to pass to the features extractor.
     :param normalize_images: Whether to normalize images or not,
          dividing by 255.0 (True by default)
-    :param optimizer_class: The optimizer to use,
-        ``th.optim.Adam`` by default
-    :param optimizer_kwargs: Additional keyword arguments,
-        excluding the learning rate, to pass to the optimizer
     """
 
     def __init__(
@@ -102,7 +98,6 @@ class DQNPolicy(BasePolicy):
         activation_fn,
         n_critics,
         ff_dropout_rate,
-        critic_learning_rate: float = 0.001,
         action_dropout_rate: float = 0.1,
         exploration_rate: float = 0.1,
         exploration_fraction: float = 0.1,
@@ -111,8 +106,6 @@ class DQNPolicy(BasePolicy):
         boltzmann_exploration: bool = False,
         temperature: float = 1.0,
         net_arch: Optional[Union[List[int], Dict[str, List[int]]]] = [64, 64],
-        optimizer_class: Type[th.optim.Optimizer] = th.optim.Adam,
-        optimizer_kwargs: Optional[Dict[str, Any]] = None,
         xavier_initialization: bool = True,
         relation_only: bool = True,
     ):
@@ -124,9 +117,6 @@ class DQNPolicy(BasePolicy):
             activation_fn,
             net_arch,
             ff_dropout_rate,
-            critic_learning_rate=critic_learning_rate,
-            optimizer_class=optimizer_class,
-            optimizer_kwargs=optimizer_kwargs,
             xavier_initialization=xavier_initialization,
             relation_only=relation_only,
         )
@@ -137,8 +127,6 @@ class DQNPolicy(BasePolicy):
         self.exploration_final_eps = exploration_final_eps
         self.boltzmann_exploration = boltzmann_exploration
         self.temperature = temperature
-
-        self.optimizer_class = optimizer_class
 
         self.critic_kwargs = self.base_kwargs.copy()
         self.critic_kwargs.update({
@@ -164,9 +152,6 @@ class DQNPolicy(BasePolicy):
         self.q_net_target = self.make_q_net()
         self.q_net_target.load_state_dict(self.q_net.state_dict())
         self.q_net_target.set_training_mode(False)
-
-        # Setup optimizer with initial learning rate
-        self.optimizer = self.optimizer_class(self.parameters(), lr=self.critic_learning_rate, **self.optimizer_kwargs)
 
         self.exploration_schedule = utils.get_linear_fn(
             self.exploration_initial_eps,

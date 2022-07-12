@@ -82,13 +82,9 @@ class SACPolicy(BasePolicy):
         history_num_layers,
         activation_fn,
         net_arch: Optional[Union[List[int], Dict[str, List[int]]]],
-        optimizer_class: Type[th.optim.Optimizer] = th.optim.Adam,
-        optimizer_kwargs: Optional[Dict[str, Any]] = None,
         n_critics: int = 1,
         ff_dropout_rate: float = 0.1,
         action_dropout_rate: float = 0.5,
-        actor_learning_rate: float = 0.001,
-        critic_learning_rate: float = 0.001,
         share_features_extractor: bool = True,
         xavier_initialization: bool = True,
         relation_only: bool = False,
@@ -101,10 +97,6 @@ class SACPolicy(BasePolicy):
             activation_fn,
             net_arch,
             ff_dropout_rate,
-            actor_learning_rate=actor_learning_rate,
-            critic_learning_rate=critic_learning_rate,
-            optimizer_class=optimizer_class,
-            optimizer_kwargs=optimizer_kwargs,
             xavier_initialization=xavier_initialization,
             relation_only=relation_only,
         )
@@ -142,11 +134,6 @@ class SACPolicy(BasePolicy):
             }
         )
 
-        if optimizer_kwargs is None:
-            optimizer_kwargs = {}
-        self.optimizer_kwargs = optimizer_kwargs
-        self.optimizer_class = optimizer_class
-
         # self.exploration_rate = exploration_rate
         # self.exploration_fraction = exploration_fraction
         # self.exploration_initial_eps = exploration_initial_eps
@@ -180,25 +167,15 @@ class SACPolicy(BasePolicy):
 
     def _build(self,):
         self.actor = self.make_actor()
-        self.actor.optimizer = self.optimizer_class(self.actor.parameters(), lr=self.actor_learning_rate, **self.optimizer_kwargs)
 
         if self.share_features_extractor:
             self.critic = self.make_critic(feature_extractor=self.actor.feature_extractor)
-            critic_parameters = [param for name, param in self.critic.named_parameters() if 'feature_extractor' not in name]
         else:
             self.critic = self.make_critic(feature_extractor=None)
-            critic_parameters = self.critic.parameters()
-        self.critic.optimizer = self.optimizer_class(critic_parameters, lr=self.critic_learning_rate, **self.optimizer_kwargs)
 
         self.critic_target = self.make_critic(feature_extractor=None)
         self.critic_target.load_state_dict(self.critic.state_dict())
         self.critic_target.train(False)
-
-        # self.exploration_schedule = utils.get_linear_fn(
-        #     self.exploration_initial_eps,
-        #     self.exploration_final_eps,
-        #     self.exploration_fraction,
-        # )
 
     def make_actor(self) -> Actor:
         return Actor(**self.actor_kwargs).to(self.device)
@@ -208,7 +185,6 @@ class SACPolicy(BasePolicy):
         if feature_extractor is not None:
             critic_kwargs['feature_extractor'] = feature_extractor
         return Critic(**critic_kwargs).to(self.device)
-
 
     def predict(self, obs: Observation, kg, use_action_space_bucketing=False, deterministic=True):
         with th.no_grad():

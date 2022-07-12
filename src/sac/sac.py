@@ -46,6 +46,8 @@ class SAC(OffPolicyAlgorithm):
         replay_buffer_class: Union[str, ReplayBuffer] = None,
         replay_buffer_kwargs: Optional[Dict[str, Any]] = None,
         policy_class: Union[str, SACPolicy] = None,
+        optimizer_class: Type[th.optim.Optimizer] = th.optim.Adam,
+        optimizer_kwargs: Optional[Dict[str, Any]] = None,
         verbose: int = 0,
     ):
         super(SAC, self).__init__(
@@ -81,6 +83,11 @@ class SAC(OffPolicyAlgorithm):
         self.ent_coef_optimizer = None
         self.ent_coef = ent_coef
 
+        self.optimizer_class = optimizer_class
+        if optimizer_kwargs is None:
+            optimizer_kwargs = {}
+        self.optimizer_kwargs = optimizer_kwargs
+
         self.replay_buffer_class = replay_buffer_class
         if replay_buffer_kwargs is None:
             replay_buffer_kwargs = {}
@@ -97,7 +104,6 @@ class SAC(OffPolicyAlgorithm):
     def _setup_model(self) -> None:
         self.policy_kwargs.update({
             'action_dropout_rate': self.action_dropout_rate,
-            'actor_learning_rate': self.actor_learning_rate,
             'net_arch': self.net_arch,
             'share_features_extractor': True,
         })
@@ -107,7 +113,9 @@ class SAC(OffPolicyAlgorithm):
         # Target entropy is used when learning the entropy coefficient
         if self.target_entropy == "auto":
             # automatically set target entropy if needed
-            self.target_entropy = -np.prod(self.kg.max_num_actions).astype(np.float32)
+            # self.target_entropy = -np.prod(self.kg.max_num_actions).astype(np.float32)
+            # https://github.com/p-christ/Deep-Reinforcement-Learning-Algorithms-with-PyTorch/blob/master/agents/actor_critic_agents/SAC_Discrete.py
+            self.target_entropy = np.log(self.kg.max_num_actions).astype(np.float32) * 0.98
         else:
             # Force conversion
             # this will also throw an error for unexpected string
@@ -126,12 +134,20 @@ class SAC(OffPolicyAlgorithm):
             # Note: we optimize the log of the entropy coeff which is slightly different from the paper
             # as discussed in https://github.com/rail-berkeley/softlearning/issues/37
             self.log_ent_coef = th.log(th.ones(1, device=self.device) * init_value).requires_grad_(True)
-            self.ent_coef_optimizer = th.optim.Adam([self.log_ent_coef], lr=self.eof_learning_rate)
+            self.ent_coef_optimizer = self.optimizer_class([self.log_ent_coef], lr=self.eof_learning_rate)
         else:
             # Force conversion to float
             # this will throw an error if a malformed string (different from 'auto')
             # is passed
             self.ent_coef_tensor = th.tensor(float(self.ent_coef)).to(self.device)
+
+            # Setup optimizer with initial learning rate
+            self.critic_optimizer = self.optimizer_class(filter(lambda p: p.requires_grad, self.critic.parameters()),
+                                                         lr=self.critic_learning_rate, **self.optimizer_kwargs)
+
+            # Setup optimizer with initial learning rate
+            self.actor_optimizer = self.optimizer_class(filter(lambda p: p.requires_grad, self.actor.parameters()),
+                                                        lr=self.actor_learning_rate, **self.optimizer_kwargs)
 
     def _create_aliases(self) -> None:
         self.actor = self.policy.actor
@@ -217,9 +233,9 @@ class SAC(OffPolicyAlgorithm):
             critic_losses.append(critic_loss.item())
 
             # Optimize the critic
-            self.critic.optimizer.zero_grad()
+            self.critic_optimizer.zero_grad()
             critic_loss.backward()
-            self.critic.optimizer.step()
+            self.critic_optimizer.step()
 
             # Compute actor loss
             # Alternative: actor_loss = th.mean(log_prob - qf1_pi)
@@ -230,9 +246,9 @@ class SAC(OffPolicyAlgorithm):
             actor_losses.append(actor_loss.item())
 
             # Optimize the actor
-            self.actor.optimizer.zero_grad()
+            self.actor_optimizer.zero_grad()
             actor_loss.backward()
-            self.actor.optimizer.step()
+            self.actor_optimizer.step()
 
             # Update target networks
             if gradient_step % self.target_update_interval == 0:

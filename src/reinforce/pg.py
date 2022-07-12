@@ -39,6 +39,8 @@ class REINFORCE(LFramework):
         self.policy = pn
 
         self.optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, self.parameters()), lr=self.actor_learning_rate)
+        # for param_group in self.optimizer.param_groups:  #
+        #     print(param_group)
 
     def reward_fun(self, e1, r, e2, pred_e2):
         reward = (pred_e2 == e2).float()
@@ -128,8 +130,8 @@ class REINFORCE(LFramework):
         # Initialization
         log_action_probs = []
         action_entropy = []
-        r_s = int_fill_var_cuda(e_s.size(), kg.dummy_start_r, device=self.device)
-        seen_nodes = int_fill_var_cuda(e_s.size(), kg.dummy_e, device=self.device).unsqueeze(1)
+        r_s = utils.int_fill_var_cuda(e_s.size(), kg.dummy_start_r, device=self.device)
+        seen_nodes = utils.int_fill_var_cuda(e_s.size(), kg.dummy_e, device=self.device).unsqueeze(1)
         path_components = []
 
         path_trace = [(r_s, e_s)]

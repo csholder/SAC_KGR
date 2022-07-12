@@ -84,6 +84,10 @@ class LFramework(nn.Module):
             self.logger.info('Epoch {}: '.format(epoch_id))
             self.train()
 
+            if 'rs' in self.model_name:
+                self.fn.eval()
+                self.fn_kg.eval()
+
             random.shuffle(train_data)
 
             if self.run_analysis:
@@ -94,6 +98,7 @@ class LFramework(nn.Module):
 
             batch_losses, entropies, batch_actor_losses, batch_critic_losses, batch_ent_coef_losses = [], [], [], [], []
             for example_id in tqdm(range(0, len(train_data), self.train_batch_size), desc='Training: '):
+            # for example_id in range(0, len(train_data), self.train_batch_size):
                 mini_batch = train_data[example_id: example_id + self.train_batch_size]
                 mini_batch = format_batch(mini_batch, num_labels=self.kg.num_entities,
                                           num_tiles=self.num_rollouts, device=self.device)
@@ -206,6 +211,7 @@ class LFramework(nn.Module):
     def forward(self, examples, verbose=False, query_path_dict=None):
         pred_scores = []
         for example_id in tqdm(range(0, len(examples), self.eval_batch_size)):
+        # for example_id in range(0, len(examples), self.eval_batch_size):
             mini_batch = examples[example_id:example_id + self.eval_batch_size]
             mini_batch_size = len(mini_batch)
             if len(mini_batch) < self.eval_batch_size:

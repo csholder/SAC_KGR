@@ -146,7 +146,6 @@ class OffPolicyAlgorithm(LFramework):
                 'activation_fn': th.nn.Tanh,
                 'n_critics': self.n_critics,
                 'ff_dropout_rate': self.ff_dropout_rate,
-                'critic_learning_rate': self.critic_learning_rate,
                 'xavier_initialization': self.xavier_initialization,
                 'relation_only': self.relation_only,
             }
@@ -423,17 +422,6 @@ class OffPolicyAlgorithm(LFramework):
 
             if torch.all(new_obs.done.bool()):
                 if self.run_analysis:
-                    e1, r, pred_e2 = new_obs.path_e[:, 0], new_obs.query_relation, new_obs.path_e[:, -1]
-                    fn = torch.zeros(rewards.size())
-                    for i in range(len(rewards)):
-                        if not rewards[i]:
-                            if int(pred_e2[i]) in self.kg.all_objects[int(e1[i])][int(r[i])]:
-                                fn[i] = 1
-                    if self.fns is None:
-                        self.fns = fn
-                    else:
-                        self.fns = torch.cat([self.fns, fn])
-
                     current_rewards = (rewards == 1.).float()
                     if self.rewards is None:
                         self.rewards = current_rewards

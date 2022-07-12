@@ -48,7 +48,7 @@ def initialize_model_directory(args):
     reverse_edge_tag = '-RV' if args.add_reversed_training_edges else ''
 
     if args.model_name.startswith('embed'):
-        hyperparam_sig = '{}-{}-{}-{}-{}-{}-{}'.format(
+        hyperparam_sig = '{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}'.format(
             args.entity_dim,
             args.relation_dim,
             args.learning_rate,

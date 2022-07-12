@@ -75,5 +75,6 @@ class RewardShapingPolicyGradient(PolicyGradient):
         real_reward = self.fn.forward_fact(e1, r, pred_e2, self.fn_kg).squeeze(1)
         real_reward_mask = (real_reward > self.reward_shaping_threshold).float()
         real_reward *= real_reward_mask
+        # print('real reward: ', real_reward.sum().detach().cpu().item())
         binary_reward = (pred_e2 == e2).float()
         return binary_reward + self.mu * (1 - binary_reward) * real_reward, binary_reward

@@ -19,8 +19,6 @@ class BasePolicy(nn.Module):
         activation_fn,
         net_arch,
         ff_dropout_rate,
-        actor_learning_rate: float = 0.001,
-        critic_learning_rate: float = 0.001,
         xavier_initialization: bool = True,
         relation_only: bool = False,
     ):
@@ -35,8 +33,6 @@ class BasePolicy(nn.Module):
             self.state_dim = entity_dim + relation_dim + history_dim
         self.action_dim = entity_dim + relation_dim
         self.history_num_layers = history_num_layers
-        self.actor_learning_rate = actor_learning_rate
-        self.critic_learning_rate = critic_learning_rate
 
         self.base_kwargs = {
             'net_arch': net_arch,

@@ -68,6 +68,7 @@ class RewardShapingREINFORCE(REINFORCE):
                 real_reward = self.fn.forward_fact(e1, r, pred_e2, self.fn_kg, [self.fn_secondary_kg]).squeeze(1)
             else:
                 real_reward = self.fn.forward_fact(e1, r, pred_e2, self.fn_kg).squeeze(1)
+            # print('before real reward: ', real_reward.sum().detach().cpu().item())
             real_reward_mask = (real_reward > self.reward_shaping_threshold).float()
             real_reward *= real_reward_mask
             if self.model.endswith('rsc'):

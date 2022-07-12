@@ -8,12 +8,15 @@ START_RELATION = 'START_RELATION'
 NO_OP_RELATION = 'NO_OP_RELATION'
 DUMMY_ENTITY = 'DUMMY_ENTITY'
 NO_OP_ENTITY = 'NO_OP_ENTITY'
+PAD_ENTITY = 'PAD_ENTITY'
 
 DUMMY_RELATION_ID = 0
 START_RELATION_ID = 1
 NO_OP_RELATION_ID = 2
 DUMMY_ENTITY_ID = 0
 NO_OP_ENTITY_ID = 1
+PAD_ENTITY_ID = 2
+
 
 
 def check_answer_ratio(examples):
@@ -238,6 +241,7 @@ def prepare_kb_envrioment(raw_kb_path, train_path, dev_path, test_path, test_mod
     with open(os.path.join(data_dir, 'entity2id.txt'), 'w') as o_f:
         o_f.write('{}\t{}\n'.format(DUMMY_ENTITY, DUMMY_ENTITY_ID))
         o_f.write('{}\t{}\n'.format(NO_OP_ENTITY, NO_OP_ENTITY_ID))
+        o_f.write('{}\t{}\n'.format(PAD_ENTITY, PAD_ENTITY_ID))
         for e, freq in hist_to_vocab(entity_hist):
             o_f.write('{}\t{}\n'.format(e, freq))
     with open(os.path.join(data_dir, 'relation2id.txt'), 'w') as o_f:

@@ -87,6 +87,8 @@ class DQN(OffPolicyAlgorithm):
         replay_buffer_class: Union[str, ReplayBuffer] = None,
         policy_class: Union[str, DQNPolicy] = None,
         policy_kwargs: Optional[Dict[str, Any]] = None,
+        optimizer_class: Type[th.optim.Optimizer] = th.optim.Adam,
+        optimizer_kwargs: Optional[Dict[str, Any]] = None,
         xavier_initialization: bool = True,
         relation_only: bool = True,
         deterministic: bool = False,
@@ -132,6 +134,11 @@ class DQN(OffPolicyAlgorithm):
         self.boltzmann_exploration = boltzmann_exploration
         self.temperature = temperature
 
+        self.optimizer_class = optimizer_class
+        if optimizer_kwargs is None:
+            optimizer_kwargs = {}
+        self.optimizer_kwargs = optimizer_kwargs
+
         self.target_update_interval = target_update_interval
         # For updating the target network with multiple envs:
         self._n_calls = 0
@@ -157,6 +164,10 @@ class DQN(OffPolicyAlgorithm):
         })
         super(DQN, self)._setup_model()
         self._create_aliases()
+
+        # Setup optimizer with initial learning rate
+        self.optimizer = self.optimizer_class(filter(lambda p: p.requires_grad, self.parameters()),
+                                              lr=self.critic_learning_rate, **self.optimizer_kwargs)
 
     def _create_aliases(self) -> None:
         self.q_net = self.policy.q_net
@@ -196,12 +207,12 @@ class DQN(OffPolicyAlgorithm):
             losses.append(loss.item())
 
             # Optimize the policy
-            self.policy.optimizer.zero_grad()
+            self.optimizer.zero_grad()
             loss.backward()
             # Clip gradient norm
             if self.max_grad_norm > 0:
                 th.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
-            self.policy.optimizer.step()
+            self.optimizer.step()
 
             self._on_step()
 

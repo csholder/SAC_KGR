@@ -82,7 +82,6 @@ class PolicyGradient(LFramework):
             'net_arch': self.net_arch,
             'ff_dropout_rate': self.ff_dropout_rate,
             'action_dropout_rate': self.action_dropout_rate,
-            'actor_learning_rate': self.actor_learning_rate,
             'xavier_initialization': self.xavier_initialization,
             'relation_only': self.relation_only,
         }
@@ -99,6 +98,8 @@ class PolicyGradient(LFramework):
         self._create_aliases()
         self.optimizer = self.optimizer_class(filter(lambda p: p.requires_grad, self.parameters()),
                                               lr=self.actor_learning_rate, **self.optimizer_kwargs)
+        for param_group in self.optimizer.param_groups:  #
+            print(param_group)
 
     def _create_aliases(self) -> None:
         self.actor = self.policy.actor

@@ -17,7 +17,7 @@ import torch.nn as nn
 from src.common.data_utils import load_index
 from src.common.data_utils import NO_OP_ENTITY_ID, NO_OP_RELATION_ID
 from src.common.data_utils import DUMMY_ENTITY_ID, DUMMY_RELATION_ID
-from src.common.data_utils import START_RELATION_ID
+from src.common.data_utils import START_RELATION_ID, PAD_ENTITY_ID
 from src.common.utils import pad_and_cat
 from src.common.common_class import Observation
 
@@ -377,11 +377,8 @@ class KnowledgeGraph(nn.Module):
         self.RDropout = nn.Dropout(self.emb_dropout_rate)
 
     def initialize_modules(self):
-        # if not self.args.relation_only:
         nn.init.xavier_normal_(self.entity_embeddings.weight)
-        # nn.init.constant_(self.entity_embeddings.weight, 1.414)
         nn.init.xavier_normal_(self.relation_embeddings.weight)
-        # nn.init.constant_(self.relation_embeddings.weight, 1.414)
 
     @property
     def num_entities(self):
@@ -411,6 +408,6 @@ class KnowledgeGraph(nn.Module):
     def dummy_start_r(self):
         return START_RELATION_ID
 
-    # @property
-    # def padding_e(self):
-    #     return PAD_ENTITY_ID
+    @property
+    def padding_e(self):
+        return PAD_ENTITY_ID
