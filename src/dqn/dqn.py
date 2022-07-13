@@ -77,6 +77,7 @@ class DQN(OffPolicyAlgorithm):
         gamma: float = 0.99,
         train_freq: Union[int, Tuple[int, str]] = 4,
         gradient_steps: int = 1,
+        n_critics: int = 1,
         target_update_interval: int = 1,
         exploration_fraction: float = 0.1,
         exploration_initial_eps: float = 0.5,
@@ -95,6 +96,7 @@ class DQN(OffPolicyAlgorithm):
         verbose: int = 0,
         _init_setup_model: bool = True,
         beam_search_with_q_value: bool = True,
+        target_net_dropout: bool = False,
     ):
         super(DQN, self).__init__(
             args,
@@ -115,6 +117,7 @@ class DQN(OffPolicyAlgorithm):
             gamma=gamma,
             train_freq=train_freq,
             gradient_steps=gradient_steps,
+            n_critics=n_critics,
             replay_buffer_class=replay_buffer_class,
             policy_class=policy_class,
             policy_kwargs=policy_kwargs,
@@ -147,6 +150,7 @@ class DQN(OffPolicyAlgorithm):
         self.exploration_schedule = None
         self.q_net, self.q_net_target = None, None
         self.beam_search_with_q_value = beam_search_with_q_value
+        self.target_net_dropout = target_net_dropout
 
         if _init_setup_model:
             self._setup_model()
@@ -186,8 +190,9 @@ class DQN(OffPolicyAlgorithm):
 
             with th.no_grad():
                 # Compute the next Q-values using the target network
-                sample_outcome = self.policy.sample_action(replay_data.next_observation, self.kg,
-                                                           use_action_space_bucketing=self.use_action_space_bucketing)
+                sample_outcome = self.q_net_target.sample_action(replay_data.next_observation, self.kg,
+                                                                 use_action_space_bucketing=self.use_action_space_bucketing,
+                                                                 apply_action_dropout=self.target_net_dropout)
                 next_q_values = sample_outcome['q_values']
                 
                 # _, q_values = self.policy.calculate_q_values(replay_data.next_observation, self.kg,
@@ -211,7 +216,7 @@ class DQN(OffPolicyAlgorithm):
             loss.backward()
             # Clip gradient norm
             if self.max_grad_norm > 0:
-                th.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
+                th.nn.utils.clip_grad_norm_(self.parameters(), self.max_grad_norm)
             self.optimizer.step()
 
             self._on_step()

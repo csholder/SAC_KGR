@@ -89,6 +89,7 @@ class OffPolicyAlgorithm(LFramework):
         gamma: float = 0.99,
         train_freq: Union[int, Tuple[int, str]] = (1, "step"),
         gradient_steps: int = 1,
+        n_critics: int = 1,
         replay_buffer_class: Union[str, ReplayBuffer] = None,
         policy_class: Union[str, SACPolicy] = None,
         policy_kwargs: Optional[Dict[str, Any]] = None,
@@ -115,7 +116,7 @@ class OffPolicyAlgorithm(LFramework):
 
         self._episode_storage = None
 
-        self.n_critics = args.n_critics
+        self.n_critics = n_critics
         self.replay_buffer_class = replay_buffer_class
         self.policy_class = policy_class
         self.deterministic = deterministic
@@ -299,8 +300,9 @@ class OffPolicyAlgorithm(LFramework):
         # Note: when using continuous actions,
         # we assume that the policy uses tanh to scale the action
         # We use non-deterministic action in the case of SAC, for TD3, it does not matter
-        sample_outcome = self.policy.predict(self._last_obs, self.kg, self.use_action_space_bucketing,
-                                             self.deterministic)
+        # sample_outcome = self.policy.predict(self._last_obs, self.kg, self.use_action_space_bucketing,
+        #                                      self.deterministic)
+        sample_outcome = self.sample_action(self._last_obs, deterministic=self.deterministic)
         return sample_outcome['action_sample']
 
     def _on_step(self) -> None:

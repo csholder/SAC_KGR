@@ -72,6 +72,49 @@ class QNetwork(BaseCritic):
         action_dist = F.softmax(q_values / self.temperature, dim=-1)
         return action_dist, q_values, action_mask
 
+    def sample_action(self, obs: Observation, kg, use_action_space_bucketing=False, apply_action_dropout=True):
+        def apply_q_value_action_dropout_mask(q_values, action_mask):
+            if self.action_dropout_rate > 0:
+                rand = th.rand(q_values.size(), device=q_values.device)
+                action_keep_mask = (rand > self.action_dropout_rate).float()
+                keep_mask = action_keep_mask * action_mask
+                if th.any(keep_mask.sum(dim=-1) == 0):
+                    zero_row_flag = (keep_mask.sum(dim=-1) == 0).unsqueeze(dim=-1).expand_as(action_keep_mask)
+                    keep_mask = th.where(zero_row_flag, action_mask, keep_mask)
+                sample_q_values = q_values - utils.HUGE_INT * (1 - keep_mask)
+                return sample_q_values
+            else:
+                return q_values
+
+        if use_action_space_bucketing:
+            references, next_r, next_e, q_values = [], [], [], []
+            db_action_spaces, db_references, db_observations = get_action_space_in_buckets(obs, kg)
+            for action_space_b, reference_b, obs_b in zip(db_action_spaces, db_references, db_observations):
+                action_dist_b, q_values_b, action_mask_b = self.predict_action_dist_batch(obs_b, action_space_b, kg)
+                if apply_action_dropout:
+                    q_values_b = apply_q_value_action_dropout_mask(q_values_b, action_mask_b)
+                # Greedy action
+                q_value_b, action_indice_b = q_values_b.max(dim=1, keepdim=True)
+                action_r_b = utils.batch_lookup(action_space_b[0][0], action_indice_b)
+                action_e_b = utils.batch_lookup(action_space_b[0][1], action_indice_b)
+                references.extend(reference_b)
+                q_values.append(q_value_b)
+                next_r.append(action_r_b)
+                next_e.append(action_e_b)
+            inv_offset = [i for i, _ in sorted(enumerate(references), key=lambda x: x[1])]
+            next_r = th.cat(next_r, dim=-1)[inv_offset]
+            next_e = th.cat(next_e, dim=-1)[inv_offset]
+            q_values_ = th.cat(q_values, dim=0)[inv_offset]
+        else:
+            action_space = get_action_space(obs, kg)
+            action_dist, q_values, action_mask = self.predict_action_dist_batch(obs, action_space, kg)
+            if apply_action_dropout:
+                q_values = apply_q_value_action_dropout_mask(q_values, action_mask)
+            q_values_, action_indice = q_values.max(dim=1, keepdim=True)
+            next_r = utils.batch_lookup(action_space[0][0], action_indice)
+            next_e = utils.batch_lookup(action_space[0][1], action_indice)
+        return {'action_sample': (next_r, next_e), 'q_values': q_values_.reshape(-1)}
+
 
 class DQNPolicy(BasePolicy):
     """
@@ -170,65 +213,6 @@ class DQNPolicy(BasePolicy):
         q_value = self.q_net.predict_q_value(obs, action, kg)
         return q_value
 
-    def sample_action(self, obs: Observation, kg, use_action_space_bucketing=False, apply_action_dropout=True):
-        def apply_dist_action_dropout_mask(action_dist, action_mask):
-            if self.action_dropout_rate > 0:
-                rand = th.rand(action_dist.size(), device=action_dist.device)
-                action_keep_mask = (rand > self.action_dropout_rate).float()
-                sample_action_dist = \
-                    action_dist * action_keep_mask + utils.EPSILON * (1 - action_keep_mask) * action_mask
-                return sample_action_dist
-            else:
-                return action_dist
-
-        def apply_q_value_action_dropout_mask(q_values, action_mask):
-            if self.action_dropout_rate > 0:
-                rand = th.rand(q_values.size(), device=q_values.device)
-                action_keep_mask = (rand > self.action_dropout_rate).float()
-                keep_mask = action_keep_mask * action_mask
-                if th.any(keep_mask.sum(dim=-1) == 0):
-                    zero_row_flag = (keep_mask.sum(dim=-1) == 0).unsqueeze(dim=-1).expand_as(action_keep_mask)
-                    keep_mask = th.where(zero_row_flag, action_mask, keep_mask)
-                sample_q_values = q_values - utils.HUGE_INT * (1 - keep_mask)
-                return sample_q_values
-            else:
-                return q_values
-
-        if use_action_space_bucketing:
-            references, next_r, next_e, q_values = [], [], [], []
-            db_action_spaces, db_references, db_observations = get_action_space_in_buckets(obs, kg)
-            for action_space_b, reference_b, obs_b in zip(db_action_spaces, db_references, db_observations):
-                action_dist_b, q_values_b, action_mask_b = self.q_net.predict_action_dist_batch(obs_b, action_space_b, kg)
-                if apply_action_dropout:
-                    q_values_b = apply_q_value_action_dropout_mask(q_values_b, action_mask_b)
-                # Greedy action
-                q_value_b, action_indice_b = q_values_b.max(dim=1, keepdim=True)
-                action_r_b = utils.batch_lookup(action_space_b[0][0], action_indice_b)
-                action_e_b = utils.batch_lookup(action_space_b[0][1], action_indice_b)
-                references.extend(reference_b)
-                q_values.append(q_value_b)
-                next_r.append(action_r_b)
-                next_e.append(action_e_b)
-            inv_offset = [i for i, _ in sorted(enumerate(references), key=lambda x: x[1])]
-            next_r = th.cat(next_r, dim=-1)[inv_offset]
-            next_e = th.cat(next_e, dim=-1)[inv_offset]
-            q_values_ = th.cat(q_values, dim=0)[inv_offset]
-        else:
-            action_space = get_action_space(obs, kg)
-            action_dist, q_values, action_mask = self.q_net.predict_action_dist_batch(obs, action_space, kg)
-            if not self.boltzmann_exploration:
-                if apply_action_dropout:
-                    q_values = apply_q_value_action_dropout_mask(q_values, action_mask)
-                q_values_, action_indice = q_values.max(dim=1, keepdim=True)
-            else:
-                if apply_action_dropout:
-                    action_dist = apply_dist_action_dropout_mask(action_dist, action_mask)
-                action_indice = th.multinomial(action_dist, num_samples=1)
-                q_values_ = utils.batch_lookup(q_values, action_indice)
-            next_r = utils.batch_lookup(action_space[0][0], action_indice)
-            next_e = utils.batch_lookup(action_space[0][1], action_indice)
-        return {'action_sample': (next_r, next_e), 'q_values': q_values_.reshape(-1)}
-
     def random_sample_action(self, obs: Observation, kg, use_action_space_bucketing=False):
         def apply_sample_with_mask(action_dim, action_mask):
             actions_n = action_mask.sum(dim=-1)
@@ -263,7 +247,7 @@ class DQNPolicy(BasePolicy):
             if (not deterministic) and (not self.boltzmann_exploration) and np.random.rand() < self.exploration_rate:
                 sample_outcome = self.random_sample_action(obs, kg, use_action_space_bucketing)
             else:
-                sample_outcome = self.sample_action(obs, kg, use_action_space_bucketing)
+                sample_outcome = self.q_net.sample_action(obs, kg, use_action_space_bucketing)
         return sample_outcome
 
     def calculate_q_values(self, obs: Observation, kg, use_action_space_bucketing=False):

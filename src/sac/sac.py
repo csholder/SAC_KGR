@@ -39,6 +39,7 @@ class SAC(OffPolicyAlgorithm):
         gamma: float = 0.99,
         train_freq: Union[int, Tuple[int, str]] = 1,
         gradient_steps: int = 1,
+        n_critics: int = 1,
         ent_coef: Union[str, float] = 'auto',
         target_update_interval: int = 1,
         target_entropy: Union[str, float] = 'auto',
@@ -69,6 +70,7 @@ class SAC(OffPolicyAlgorithm):
             gamma=gamma,
             train_freq=train_freq,
             gradient_steps=gradient_steps,
+            n_critics=n_critics,
             replay_buffer_class=replay_buffer_class,
             policy_class=policy_class,
             verbose=verbose,
@@ -218,8 +220,8 @@ class SAC(OffPolicyAlgorithm):
                 self.ent_coef_optimizer.zero_grad()
                 ent_coef_loss.backward()
                 self.ent_coef_optimizer.step()
+                ent_coef = th.exp(self.log_ent_coef.detach())
 
-            ent_coef = th.exp(self.log_ent_coef.detach())
             with th.no_grad():
                 # Select action according to policy
                 next_sample_outcome = self.actor.action_prob(replay_data.next_observation, kg=self.kg,
@@ -236,8 +238,7 @@ class SAC(OffPolicyAlgorithm):
 
             # Get current Q-values estimates for each critic network
             # using action from the replay buffer
-            store_action_embedding = utils.get_action_embedding(replay_data.action, self.kg)
-            current_q_values = self.critic.forward(replay_data.observation, store_action_embedding, self.kg)
+            current_q_values = self.policy.evaluate_action(replay_data.observation, action=replay_data.action, kg=self.kg)
 
             # Compute critic loss
             # critic_loss = 0.5 * sum([F.mse_loss(current_q, target_q_values) for current_q in current_q_values])
@@ -247,6 +248,8 @@ class SAC(OffPolicyAlgorithm):
             # Optimize the critic
             self.critic_optimizer.zero_grad()
             critic_loss.backward()
+            if self.max_grad_norm > 0:
+                th.nn.utils.clip_grad_norm_(self.parameters(), self.max_grad_norm)
             self.critic_optimizer.step()
 
             # Compute actor loss
@@ -256,12 +259,14 @@ class SAC(OffPolicyAlgorithm):
             # min_qf_pi = self.critic.forward(replay_data.observation, current_action_embedding, self.kg)
             # actor_loss = (ent_coef * log_prob - min_qf_pi).mean()
             _, current_q_values_for_action_space = self.critic.calculate_q_values(replay_data.observation, self.kg, self.use_action_space_bucketing)
-            actor_loss = th.matmul(action_dist, (ent_coef.detach() * log_action_dist - current_q_values_for_action_space).t()).mean()
+            actor_loss = th.mul(action_dist, (ent_coef * log_action_dist - current_q_values_for_action_space)).sum(dim=-1).mean()
             actor_losses.append(actor_loss.item())
 
             # Optimize the actor
             self.actor_optimizer.zero_grad()
             actor_loss.backward()
+            if self.max_grad_norm > 0:
+                th.nn.utils.clip_grad_norm_(self.parameters(), self.max_grad_norm)
             self.actor_optimizer.step()
 
             # Update target networks

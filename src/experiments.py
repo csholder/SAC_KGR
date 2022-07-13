@@ -65,7 +65,7 @@ def initialize_model_directory(args):
             args.remark,
         )
     elif 'sac' in args.model_name:
-        hyperparam_sig = '{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}'.format(
+        hyperparam_sig = '{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}'.format(
             args.baseline,
             args.entity_dim,
             args.relation_dim,
@@ -79,12 +79,15 @@ def initialize_model_directory(args):
             args.train_freq_value,
             args.train_freq_unit,
             args.gradient_steps,
+            args.n_critics,
+            args.ent_coef,
             args.actor_learning_rate,
             args.critic_learning_rate,
             args.eof_learning_rate,
             args.emb_dropout_rate,
             args.ff_dropout_rate,
             args.action_dropout_rate,
+            args.target_entropy,
             args.action_entropy_ratio,
             args.bandwidth,
             args.beta,
@@ -194,7 +197,7 @@ def initialize_model_directory(args):
 
     args.model_dir = model_dir
 
-    log_dir = os.path.join(args.log_dir, args.model_name)
+    log_dir = os.path.join(args.log_dir, dataset, args.model_name)
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
     logger = logging.getLogger(hyperparam_sig)
@@ -238,9 +241,10 @@ def construct_model(args):
             actor_learning_rate=args.actor_learning_rate,
             critic_learning_rate=args.critic_learning_rate,
             eof_learning_rate=args.eof_learning_rate,
+            xavier_initialization=args.xavier_initialization,
+            relation_only=args.relation_only,
             buffer_size=args.buffer_size,  # 1e6
             batch_size=args.buffer_batch_size,
-            num_rollout_steps=args.num_rollout_steps,
             learning_starts=args.learning_starts,
             action_dropout_rate=args.action_dropout_rate,
             net_arch=args.net_arch,
@@ -248,9 +252,12 @@ def construct_model(args):
             gamma=args.gamma,
             train_freq=(args.train_freq_value, args.train_freq_unit),
             gradient_steps=args.gradient_steps,
+            n_critics=args.n_critics,
             ent_coef=args.ent_coef,
             target_update_interval=args.target_update_interval,
             target_entropy=args.target_entropy,
+            action_entropy_ratio=args.action_entropy_ratio,
+            max_grad_norm=args.max_grad_norm,
             replay_buffer_class=args.replay_buffer_class,
             policy_class=args.policy_class,
             mu=args.mu,
@@ -281,6 +288,7 @@ def construct_model(args):
             gamma=args.gamma,
             train_freq=(args.train_freq_value, args.train_freq_unit),
             gradient_steps=args.gradient_steps,
+            n_critics=args.n_critics,
             ent_coef=args.ent_coef,
             target_update_interval=args.target_update_interval,
             target_entropy=args.target_entropy,
@@ -312,6 +320,8 @@ def construct_model(args):
             'policy_class': args.policy_class,
             'replay_buffer_class': args.replay_buffer_class,
             'gradient_steps': args.gradient_steps,
+            'n_critics': args.n_critics,
+            'ent_coef': args.ent_coef,
             'target_update_interval': args.target_update_interval,
             'target_entropy': args.target_entropy,
             'action_entropy_ratio': args.action_entropy_ratio,
@@ -385,6 +395,7 @@ def construct_model(args):
             policy_class=args.policy_class,
             replay_buffer_class=args.replay_buffer_class,
             gradient_steps=args.gradient_steps,
+            n_critics=args.n_critics,
             target_update_interval=args.target_update_interval,
             exploration_fraction=args.exploration_fraction,
             exploration_initial_eps=args.exploration_initial_eps,
@@ -395,6 +406,7 @@ def construct_model(args):
             xavier_initialization=args.xavier_initialization,
             relation_only=args.relation_only,
             beam_search_with_q_value=args.beam_search_with_q_value,
+            target_net_dropout=args.target_net_dropout,
         )
         if args.use_wandb:
             wandb.config = {
@@ -424,6 +436,8 @@ def construct_model(args):
             'max_grad_norm': args.grad_norm,
             'xavier_initialization': args.xavier_initialization,
             'relation_only': args.relation_only,
+            'beam_search_with_q_value': args.beam_search_with_q_value,
+            'target_net_dropout': args.target_net_dropout,
         }
     elif args.model_name.startswith('rl.rs.dqn'):
         fn_model = args.model_name.split('.')[3]
@@ -454,6 +468,7 @@ def construct_model(args):
             policy_class=args.policy_class,
             replay_buffer_class=args.replay_buffer_class,
             gradient_steps=args.gradient_steps,
+            n_critics=args.n_critics,
             target_update_interval=args.target_update_interval,
             exploration_fraction=args.exploration_fraction,
             exploration_initial_eps=args.exploration_initial_eps,
@@ -464,6 +479,7 @@ def construct_model(args):
             xavier_initialization=args.xavier_initialization,
             relation_only=args.relation_only,
             beam_search_with_q_value=args.beam_search_with_q_value,
+            target_net_dropout=args.target_net_dropout,
         )
         if args.use_wandb:
             wandb.config = {
@@ -493,6 +509,8 @@ def construct_model(args):
             'max_grad_norm': args.grad_norm,
             'xavier_initialization': args.xavier_initialization,
             'relation_only': args.relation_only,
+            'beam_search_with_q_value': args.beam_search_with_q_value,
+            'target_net_dropout': args.target_net_dropout,
         }
     elif args.model_name.startswith('rl.reinforce'):
         pn = GraphSearchPolicy(args)

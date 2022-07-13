@@ -176,5 +176,6 @@ parser.add_argument('--eval_with_train', action='store_true')
 parser.add_argument('--boltzmann_exploration', action='store_true')
 parser.add_argument('--temperature', type=float, default=1.0, help='temperature coefficient for Boltzmann exploration')
 parser.add_argument('--beam_search_with_q_value', action='store_true')
+parser.add_argument('--target_net_dropout', action='store_true')
 
 args = parser.parse_args()

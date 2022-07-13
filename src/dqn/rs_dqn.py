@@ -38,6 +38,7 @@ class RewardShapingDQN(DQN):
         gamma: float = 0.99,
         train_freq: Union[int, Tuple[int, str]] = 4,
         gradient_steps: int = 1,
+        n_critics: int = 1,
         target_update_interval: int = 1,
         exploration_fraction: float = 0.1,
         exploration_initial_eps: float = 0.5,
@@ -54,6 +55,7 @@ class RewardShapingDQN(DQN):
         verbose: int = 0,
         _init_setup_model: bool = True,
         beam_search_with_q_value: bool = True,
+        target_net_dropout: bool = False,
     ):
         super(RewardShapingDQN, self).__init__(
             args,
@@ -74,6 +76,7 @@ class RewardShapingDQN(DQN):
             gamma=gamma,
             train_freq=train_freq,
             gradient_steps=gradient_steps,
+            n_critics=n_critics,
             target_update_interval=target_update_interval,
             exploration_fraction=exploration_fraction,
             exploration_initial_eps=exploration_initial_eps,
@@ -90,6 +93,7 @@ class RewardShapingDQN(DQN):
             verbose=verbose,
             _init_setup_model=_init_setup_model,
             beam_search_with_q_value=beam_search_with_q_value,
+            target_net_dropout=target_net_dropout,
         )
         self.fn = fn
         self.fn_kg = fn_kg

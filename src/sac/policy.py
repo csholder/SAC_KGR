@@ -213,6 +213,10 @@ class SACPolicy(BasePolicy):
         self.critic_target.load_state_dict(self.critic.state_dict())
         self.critic_target.train(False)
 
+    def evaluate_action(self, obs: Observation, action: th.Tensor, kg):
+        q_value = self.critic.predict_q_value(obs, action, kg)
+        return q_value
+
     def make_actor(self) -> Actor:
         return Actor(**self.actor_kwargs).to(self.device)
 
