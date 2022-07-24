@@ -140,6 +140,7 @@ parser.add_argument('--gamma', type=float, default=1,
 parser.add_argument('--tau', type=float, default=0.005,
                     help='parameter used in updating target q network (default: 0.005)')
 parser.add_argument('--learning_starts', type=int, default=300)
+parser.add_argument('--critic_optimize_epoch', type=int, default=1)
 parser.add_argument('--target_update_interval', type=int, default=3)
 parser.add_argument('--ent_coef', type=str, default='auto_0.01')
 parser.add_argument('--share_features_extractor', action='store_true')

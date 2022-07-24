@@ -65,7 +65,7 @@ def initialize_model_directory(args):
             args.remark,
         )
     elif 'sac' in args.model_name:
-        hyperparam_sig = '{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}'.format(
+        hyperparam_sig = '{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}'.format(
             args.baseline,
             args.entity_dim,
             args.relation_dim,
@@ -89,6 +89,8 @@ def initialize_model_directory(args):
             args.action_dropout_rate,
             args.target_entropy,
             args.action_entropy_ratio,
+            args.critic_optimize_epoch,
+            args.target_update_interval,
             args.bandwidth,
             args.beta,
             args.run_analysis,
@@ -143,7 +145,7 @@ def initialize_model_directory(args):
             args.remark
         )
     elif 'dqn' in args.model_name:
-        hyperparam_sig = '{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}'.format(
+        hyperparam_sig = '{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}'.format(
             args.baseline,
             args.entity_dim,
             args.relation_dim,
@@ -172,6 +174,7 @@ def initialize_model_directory(args):
             args.add_reversed_training_edges,
             args.relation_only,
             args.beam_search_with_q_value,
+            args.target_net_dropout,
             args.remark
         )
     else:
@@ -290,6 +293,7 @@ def construct_model(args):
             gradient_steps=args.gradient_steps,
             n_critics=args.n_critics,
             ent_coef=args.ent_coef,
+            critic_optimize_epoch=args.critic_optimize_epoch,
             target_update_interval=args.target_update_interval,
             target_entropy=args.target_entropy,
             action_entropy_ratio=args.action_entropy_ratio,
@@ -322,6 +326,7 @@ def construct_model(args):
             'gradient_steps': args.gradient_steps,
             'n_critics': args.n_critics,
             'ent_coef': args.ent_coef,
+            'critic_optimize_epoch': args.critic_optimize_epoch,
             'target_update_interval': args.target_update_interval,
             'target_entropy': args.target_entropy,
             'action_entropy_ratio': args.action_entropy_ratio,
