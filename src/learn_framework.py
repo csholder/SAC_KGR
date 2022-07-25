@@ -118,6 +118,9 @@ class LFramework(nn.Module):
                 if 'entropy' in loss_dict:
                     entropies.append(loss_dict['entropy'])
 
+            if hasattr(self, 'scheduler'):
+                self.scheduler.step()
+                self.logger.info('Learning rate: ', self.optimizer.state_dict()['param_groups'][0]['lr'])
             self.update_progress_state(epoch_id)
 
             if 'sac' in self.model_name:

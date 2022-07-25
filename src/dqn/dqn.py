@@ -66,6 +66,8 @@ class DQN(OffPolicyAlgorithm):
         history_dim: int,
         history_num_layers: int = 3,
         learning_rate: float = 1e-4,
+        lr_scheduler_step: int = 5,
+        lr_decay_gamma: float = 0.75,
         buffer_size: int = 1_000_000,  # 1e6
         buffer_batch_size: int = 32,
         magnification: int = 1,
@@ -141,6 +143,8 @@ class DQN(OffPolicyAlgorithm):
         if optimizer_kwargs is None:
             optimizer_kwargs = {}
         self.optimizer_kwargs = optimizer_kwargs
+        self.lr_scheduler_step = lr_scheduler_step
+        self.lr_decay_gamma = lr_decay_gamma
 
         self.target_update_interval = target_update_interval
         # For updating the target network with multiple envs:
@@ -172,6 +176,9 @@ class DQN(OffPolicyAlgorithm):
         # Setup optimizer with initial learning rate
         self.optimizer = self.optimizer_class(filter(lambda p: p.requires_grad, self.parameters()),
                                               lr=self.critic_learning_rate, **self.optimizer_kwargs)
+        if self.lr_scheduler_step != -1:
+            self.scheduler = th.optim.lr_scheduler.StepLR(self.optimizer, self.lr_scheduler_step,
+                                                          gamma=self.lr_decay_gamma, last_epoch=-1)
 
     def _create_aliases(self) -> None:
         self.q_net = self.policy.q_net
@@ -195,10 +202,6 @@ class DQN(OffPolicyAlgorithm):
                                                                  apply_action_dropout=self.target_net_dropout)
                 next_q_values = sample_outcome['q_values']
                 
-                # _, q_values = self.policy.calculate_q_values(replay_data.next_observation, self.kg,
-                #                                              use_action_space_bucketing=self.use_action_space_bucketing)
-                # next_q_values, _ = q_values.max(dim=-1)
-                # Avoid potential broadcast issue
                 next_q_values = next_q_values.reshape(-1)
                 # 1-step TD target
                 target_q_values = replay_data.reward + (1 - replay_data.next_observation.done) * self.gamma * next_q_values
@@ -247,6 +250,7 @@ class DQN(OffPolicyAlgorithm):
     ):
         if self.args.use_wandb:
             wandb.log({'exploration rate': self.policy.exploration_rate})
+        self.q_net_target.set_training_mode(False)
         return super(DQN, self).learn(
             mini_batch,
         )

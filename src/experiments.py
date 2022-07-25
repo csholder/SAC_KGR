@@ -14,6 +14,7 @@ from src.pg.pg import PolicyGradient
 from src.pg.rs_pg import RewardShapingPolicyGradient
 from src.dqn.dqn import DQN
 from src.dqn.rs_dqn import RewardShapingDQN
+from src.dqn.rs_double_dqn import DoubleDQN
 from src.reinforce.pg import REINFORCE
 from src.reinforce.pn import GraphSearchPolicy
 from src.reinforce.rs_pg import RewardShapingREINFORCE
@@ -181,7 +182,8 @@ def initialize_model_directory(args):
         raise NotImplementedError
 
     if args.use_wandb:
-        wandb.init(project="SAC_KGR", entity="cs_holder", name='{}-{}'.format(args.model_name, hyperparam_sig))
+        wandb.init(project="SAC_KGR", entity="cs_holder", name='{}-{}'.format(args.model_name, hyperparam_sig),
+                   config=vars(args))
 
     model_sub_dir = '{}-{}{}-{}'.format(
         dataset,
@@ -302,43 +304,6 @@ def construct_model(args):
             policy_class=args.policy_class,
             verbose=args.verbose,
         )
-        if args.use_wandb:
-            wandb.config = {
-            'entity_dim': args.entity_dim,
-            'relation_dim': args.relation_dim,
-            'history_dim': args.history_dim,
-            'history_num_layers': args.history_num_layers,
-            'learning_rate': args.critic_learning_rate,
-            'actor_learning_rate': args.actor_learning_rate,
-            'critic_learning_rate': args.critic_learning_rate,
-            'eof_learning_rate': args.eof_learning_rate,
-            'buffer_size': args.buffer_size,
-            'buffer_batch_size': args.buffer_batch_size,
-            'learning_starts': args.learning_starts,
-            'ff_dropout_rate': args.ff_dropout_rate,
-            'action_dropout_rate': args.action_dropout_rate,
-            'tau': args.tau,
-            'gamma': args.gamma,
-            'train_freq_value': args.train_freq_value,
-            'train_freq_unit': args.train_freq_unit,
-            'policy_class': args.policy_class,
-            'replay_buffer_class': args.replay_buffer_class,
-            'gradient_steps': args.gradient_steps,
-            'n_critics': args.n_critics,
-            'ent_coef': args.ent_coef,
-            'critic_optimize_epoch': args.critic_optimize_epoch,
-            'target_update_interval': args.target_update_interval,
-            'target_entropy': args.target_entropy,
-            'action_entropy_ratio': args.action_entropy_ratio,
-            'exploration_fraction': args.exploration_fraction,
-            'exploration_initial_eps': args.exploration_initial_eps,
-            'exploration_final_eps': args.exploration_final_eps,
-            'boltzmann_exploration': args.boltzmann_exploration,
-            'temperature': args.temperature,
-            'max_grad_norm': args.grad_norm,
-            'xavier_initialization': args.xavier_initialization,
-            'relation_only': args.relation_only,
-        }
     elif args.model_name.startswith('rl.pg'):
         lf = PolicyGradient(
             args,
@@ -387,6 +352,8 @@ def construct_model(args):
             history_dim=args.history_dim,
             history_num_layers=args.history_num_layers,
             learning_rate=args.critic_learning_rate,
+            lr_scheduler_step=args.lr_scheduler_step,
+            lr_decay_gamma=args.lr_decay_gamma,
             buffer_size=args.buffer_size,
             buffer_batch_size=args.buffer_batch_size,
             magnification=args.magnification,
@@ -413,37 +380,6 @@ def construct_model(args):
             beam_search_with_q_value=args.beam_search_with_q_value,
             target_net_dropout=args.target_net_dropout,
         )
-        if args.use_wandb:
-            wandb.config = {
-            'entity_dim': args.entity_dim,
-            'relation_dim': args.relation_dim,
-            'history_dim': args.history_dim,
-            'history_num_layers': args.history_num_layers,
-            'learning_rate': args.critic_learning_rate,
-            'buffer_size': args.buffer_size,
-            'buffer_batch_size': args.buffer_batch_size,
-            'learning_starts': args.learning_starts,
-            'ff_dropout_rate': args.ff_dropout_rate,
-            'action_dropout_rate': args.action_dropout_rate,
-            'tau': args.tau,
-            'gamma': args.gamma,
-            'train_freq_value': args.train_freq_value,
-            'train_freq_unit': args.train_freq_unit,
-            'policy_class': args.policy_class,
-            'replay_buffer_class': args.replay_buffer_class,
-            'gradient_steps': args.gradient_steps,
-            'target_update_interval': args.target_update_interval,
-            'exploration_fraction': args.exploration_fraction,
-            'exploration_initial_eps': args.exploration_initial_eps,
-            'exploration_final_eps': args.exploration_final_eps,
-            'boltzmann_exploration': args.boltzmann_exploration,
-            'temperature': args.temperature,
-            'max_grad_norm': args.grad_norm,
-            'xavier_initialization': args.xavier_initialization,
-            'relation_only': args.relation_only,
-            'beam_search_with_q_value': args.beam_search_with_q_value,
-            'target_net_dropout': args.target_net_dropout,
-        }
     elif args.model_name.startswith('rl.rs.dqn'):
         fn_model = args.model_name.split('.')[3]
         fn_args = copy.deepcopy(args)
@@ -460,6 +396,8 @@ def construct_model(args):
             history_dim=args.history_dim,
             history_num_layers=args.history_num_layers,
             learning_rate=args.critic_learning_rate,
+            lr_scheduler_step=args.lr_scheduler_step,
+            lr_decay_gamma=args.lr_decay_gamma,
             buffer_size=args.buffer_size,
             buffer_batch_size=args.buffer_batch_size,
             magnification=args.magnification,
@@ -486,37 +424,50 @@ def construct_model(args):
             beam_search_with_q_value=args.beam_search_with_q_value,
             target_net_dropout=args.target_net_dropout,
         )
-        if args.use_wandb:
-            wandb.config = {
-            'entity_dim': args.entity_dim,
-            'relation_dim': args.relation_dim,
-            'history_dim': args.history_dim,
-            'history_num_layers': args.history_num_layers,
-            'learning_rate': args.critic_learning_rate,
-            'buffer_size': args.buffer_size,
-            'buffer_batch_size': args.buffer_batch_size,
-            'learning_starts': args.learning_starts,
-            'ff_dropout_rate': args.ff_dropout_rate,
-            'action_dropout_rate': args.action_dropout_rate,
-            'tau': args.tau,
-            'gamma': args.gamma,
-            'train_freq_value': args.train_freq_value,
-            'train_freq_unit': args.train_freq_unit,
-            'policy_class': args.policy_class,
-            'replay_buffer_class': args.replay_buffer_class,
-            'gradient_steps': args.gradient_steps,
-            'target_update_interval': args.target_update_interval,
-            'exploration_fraction': args.exploration_fraction,
-            'exploration_initial_eps': args.exploration_initial_eps,
-            'exploration_final_eps': args.exploration_final_eps,
-            'boltzmann_exploration': args.boltzmann_exploration,
-            'temperature': args.temperature,
-            'max_grad_norm': args.grad_norm,
-            'xavier_initialization': args.xavier_initialization,
-            'relation_only': args.relation_only,
-            'beam_search_with_q_value': args.beam_search_with_q_value,
-            'target_net_dropout': args.target_net_dropout,
-        }
+    elif args.model_name.startswith('rl.rs.double.dqn'):
+        fn_model = args.model_name.split('.')[4]
+        fn_args = copy.deepcopy(args)
+        fn_args.model_name = fn_model
+        fn = ConvE(fn_args, kg.num_entities)
+        fn_kg = KnowledgeGraph(fn_args)
+        lf = DoubleDQN(
+            args,
+            kg,
+            fn_kg,
+            fn,
+            entity_dim=args.entity_dim,
+            relation_dim=args.relation_dim,
+            history_dim=args.history_dim,
+            history_num_layers=args.history_num_layers,
+            learning_rate=args.critic_learning_rate,
+            lr_scheduler_step=args.lr_scheduler_step,
+            lr_decay_gamma=args.lr_decay_gamma,
+            buffer_size=args.buffer_size,
+            buffer_batch_size=args.buffer_batch_size,
+            magnification=args.magnification,
+            learning_starts=args.learning_starts,
+            ff_dropout_rate=args.ff_dropout_rate,
+            action_dropout_rate=args.action_dropout_rate,
+            net_arch=args.net_arch,
+            tau=args.tau,
+            gamma=args.gamma,
+            train_freq=(args.train_freq_value, args.train_freq_unit),
+            policy_class=args.policy_class,
+            replay_buffer_class=args.replay_buffer_class,
+            gradient_steps=args.gradient_steps,
+            n_critics=args.n_critics,
+            target_update_interval=args.target_update_interval,
+            exploration_fraction=args.exploration_fraction,
+            exploration_initial_eps=args.exploration_initial_eps,
+            exploration_final_eps=args.exploration_final_eps,
+            boltzmann_exploration=args.boltzmann_exploration,
+            temperature=args.temperature,
+            max_grad_norm=args.grad_norm,
+            xavier_initialization=args.xavier_initialization,
+            relation_only=args.relation_only,
+            beam_search_with_q_value=args.beam_search_with_q_value,
+            target_net_dropout=args.target_net_dropout,
+        )
     elif args.model_name.startswith('rl.reinforce'):
         pn = GraphSearchPolicy(args)
         lf = REINFORCE(args, kg, pn)

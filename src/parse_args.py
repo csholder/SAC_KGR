@@ -51,6 +51,8 @@ parser.add_argument('--learning_rate', type=float, default=0.001)
 parser.add_argument('--actor_learning_rate', type=float, default=0.001)
 parser.add_argument('--critic_learning_rate', type=float, default=0.001)
 parser.add_argument('--eof_learning_rate', type=float, default=0.001)
+parser.add_argument('--lr_scheduler_step', type=int, default=-1)
+parser.add_argument('--lr_decay_gamma', type=float, default=0.75)
 parser.add_argument('--num_epochs', type=int, default=200,
                     help='maximum number of pass over the entire training set (default: 20)')
 parser.add_argument('--num_wait_epochs', type=int, default=5,

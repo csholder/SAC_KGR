@@ -209,7 +209,7 @@ class DQNPolicy(BasePolicy):
     def _update_exploration(self, current_progress_remaining):
         self.exploration_rate = self.exploration_schedule(current_progress_remaining)
 
-    def evaluate_action(self, obs: Observation, action: th.Tensor, kg):
+    def evaluate_action(self, obs: Observation, action, kg):
         q_value = self.q_net.predict_q_value(obs, action, kg)
         return q_value
 

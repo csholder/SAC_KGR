@@ -26,6 +26,8 @@ class RewardShapingDQN(DQN):
         history_dim: int,
         history_num_layers: int = 3,
         learning_rate: float = 1e-4,
+        lr_scheduler_step: int = 5,
+        lr_decay_gamma: float = 0.75,
         buffer_size: int = 1_000_000,  # 1e6
         buffer_batch_size: int = 32,
         magnification: int = 1,
@@ -65,6 +67,8 @@ class RewardShapingDQN(DQN):
             history_dim=history_dim,
             history_num_layers=history_num_layers,
             learning_rate=learning_rate,
+            lr_scheduler_step=lr_scheduler_step,
+            lr_decay_gamma=lr_decay_gamma,
             buffer_size=buffer_size,
             buffer_batch_size=buffer_batch_size,
             magnification=magnification,
