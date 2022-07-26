@@ -10,9 +10,10 @@ from src.common.knowledge_graph import KnowledgeGraph
 from src.common.buffers import ReplayBuffer
 from src.common import utils
 from src.common.common_class import Observation
+from src.emb.fact_network import get_conve_kg_state_dict, get_conve_nn_state_dict
 
 
-class DQN(OffPolicyAlgorithm):
+class DuelDQN(OffPolicyAlgorithm):
     """
     Deep Q-Network (DQN)
 
@@ -61,6 +62,8 @@ class DQN(OffPolicyAlgorithm):
         self,
         args,
         kg: KnowledgeGraph,
+        fn_kg,
+        fn,
         entity_dim: int,
         relation_dim: int,
         history_dim: int,
@@ -76,6 +79,7 @@ class DQN(OffPolicyAlgorithm):
         action_dropout_rate: float = 0.5,
         action_dropout_final_rate: float = 0.5,
         action_dropout_fraction: float = 0.5,
+        reward_shaping_threshold: float = 0.0,
         net_arch: Union[str, List[int]] = [64, 64],
         tau: float = 1.0,
         gamma: float = 0.99,
@@ -102,7 +106,7 @@ class DQN(OffPolicyAlgorithm):
         beam_search_with_q_value: bool = True,
         target_net_dropout: bool = False,
     ):
-        super(DQN, self).__init__(
+        super(DuelDQN, self).__init__(
             args,
             kg,
             entity_dim=entity_dim,
@@ -165,6 +169,23 @@ class DQN(OffPolicyAlgorithm):
         if _init_setup_model:
             self._setup_model()
 
+        self.fn = fn
+        self.fn_kg = fn_kg
+        self.mu = args.mu
+
+        self.reward_shaping_threshold = reward_shaping_threshold
+
+        fn_state_dict = th.load(args.conve_state_dict_path)
+        fn_nn_state_dict = get_conve_nn_state_dict(fn_state_dict)
+        fn_kg_state_dict = get_conve_kg_state_dict(fn_state_dict)
+        self.fn.load_state_dict(fn_nn_state_dict)
+        self.fn_kg.load_state_dict(fn_kg_state_dict)
+
+        self.fn.eval()
+        self.fn_kg.eval()
+        utils.detach_module(self.fn)
+        utils.detach_module(self.fn_kg)
+
     def _setup_model(self) -> None:
         self.policy_kwargs.update({
             'action_dropout_rate': self.action_dropout_rate,
@@ -178,7 +199,7 @@ class DQN(OffPolicyAlgorithm):
             'boltzmann_exploration': self.boltzmann_exploration,
             'temperature': self.temperature,
         })
-        super(DQN, self)._setup_model()
+        super(DuelDQN, self)._setup_model()
         self._create_aliases()
 
         # Setup optimizer with initial learning rate
@@ -218,7 +239,7 @@ class DQN(OffPolicyAlgorithm):
             # Get current Q-values estimates
             # Retrieve the q-values for the actions from the replay buffer
             current_q_values = self.policy.evaluate_action(replay_data.observation, action=replay_data.action,
-                                                           kg=self.kg)
+                                                           kg=self.kg, use_action_space_bucketing=self.use_action_space_bucketing)
 
             # Compute Huber loss (less sensitive to outliers)
             loss = F.smooth_l1_loss(current_q_values, target_q_values)
@@ -261,7 +282,7 @@ class DQN(OffPolicyAlgorithm):
         if self.args.use_wandb:
             wandb.log({'exploration rate': self.policy.exploration_rate})
         self.q_net_target.set_training_mode(False)
-        return super(DQN, self).learn(
+        return super(DuelDQN, self).learn(
             mini_batch,
         )
 
@@ -609,7 +630,7 @@ class DQN(OffPolicyAlgorithm):
         self._current_progress_remaining = 1.0 - float(num_epochs + 1) / float(total_epochs)
 
     def _excluded_save_params(self) -> List[str]:
-        return super(DQN, self)._excluded_save_params() + ["q_net", "q_net_target"]
+        return super(DuelDQN, self)._excluded_save_params() + ["q_net", "q_net_target"]
 
     def _get_torch_save_params(self) -> Tuple[List[str], List[str]]:
         state_dicts = ["policy", "policy.optimizer"]

@@ -49,19 +49,6 @@ class LFramework(nn.Module):
         self.num_path_types = 0
         self.rewards = None
 
-        print('========================== LFramework ==========================')
-        print('model_name: ', self.model_name)
-        print('start_epoch: ', self.start_epoch)
-        print('num_epochs: ', self.num_epochs)
-        print('train_batch_size: ', self.train_batch_size)
-        print('eval_batch_size: ', self.eval_batch_size)
-        print('num_rollouts: ', self.num_rollouts)
-        print('beam_size: ', self.beam_size)
-        print('run_analysis: ', self.run_analysis)
-        print('num_peek_epochs: ', self.num_peek_epochs)
-        print('num_wait_epochs: ', self.num_wait_epochs)
-        print('use_action_space_bucketing: ', self.use_action_space_bucketing)
-
     def print_all_model_parameters(self):
         self.logger.info('\nModel Parameters')
         self.logger.info('--------------------------')
@@ -120,7 +107,7 @@ class LFramework(nn.Module):
 
             if hasattr(self, 'scheduler'):
                 self.scheduler.step()
-                self.logger.info('Learning rate: ', self.optimizer.state_dict()['param_groups'][0]['lr'])
+                self.logger.info('Learning rate: {}'.format(self.optimizer.state_dict()['param_groups'][0]['lr']))
             self.update_progress_state(epoch_id)
 
             if 'sac' in self.model_name:

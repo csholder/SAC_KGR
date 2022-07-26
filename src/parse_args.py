@@ -117,10 +117,12 @@ parser.add_argument('--ff_dropout_rate', type=float, default=0.1,
                     help='Feed-forward layer dropout rate (default: 0.1)')
 parser.add_argument('--rnn_dropout_rate', type=float, default=0.0,
                     help='RNN Variational Dropout Rate (default: 0.0)')
-parser.add_argument('--action_dropout_rate', type=float, default=0.1,
+parser.add_argument('--action_dropout_rate', type=float, default=0.5,
                     help='Dropout rate for randomly masking out knowledge graph edges (default: 0.1)')
+parser.add_argument('--action_dropout_final_rate', type=float, default=0.5)
+parser.add_argument('--action_dropout_fraction', type=float, default=0.1)
 parser.add_argument('--activation_fn', type=str, default='relu')
-parser.add_argument('--net_arch', type=list, default=[64, 64])
+parser.add_argument('--net_arch', type=str, default='64_64')
 parser.add_argument('--verbose', type=int, default=0)
 
 

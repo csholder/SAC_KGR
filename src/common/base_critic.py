@@ -1,4 +1,5 @@
 import torch as th
+import torch.nn
 import torch.nn as nn
 import torch.nn.functional as F
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
@@ -34,6 +35,7 @@ class BaseCritic(nn.Module):
         self.history_dim = history_dim
         self.activation_fn = activation_fn
         self.feature_dim = action_dim
+        self.n_critics = n_critics
 
         self.share_feature_extractor = False if feature_extractor is None else share_feature_extractor
         if feature_extractor is None:

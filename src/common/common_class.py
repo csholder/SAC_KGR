@@ -90,7 +90,7 @@ class MLPFeaturesExtractor(nn.Module):
 
     def __init__(
         self,
-        action_dim,
+        input_dim,
         history_dim,
         state_dim,
         features_dim: int,
@@ -100,12 +100,12 @@ class MLPFeaturesExtractor(nn.Module):
         relation_only: bool,
     ):
         super(MLPFeaturesExtractor, self).__init__()
-        assert action_dim > 0
+        assert input_dim > 0
         assert history_dim > 0
         assert state_dim > 0
         assert features_dim > 0
         assert history_num_layers > 0
-        self._action_dim = action_dim
+        self._input_dim = input_dim
         self._history_dim = history_dim
         self._features_dim = features_dim
         self._state_dim = state_dim
@@ -113,29 +113,20 @@ class MLPFeaturesExtractor(nn.Module):
         self._xavier_initialization = xavier_initialization
         self._relation_only = relation_only
 
-        self.W1 = nn.Linear(state_dim, action_dim)
-        self.W2 = nn.Linear(action_dim, features_dim)
+        self.W1 = nn.Linear(state_dim, input_dim)
+        self.W2 = nn.Linear(input_dim, features_dim)
         self.W1Dropout = nn.Dropout(p=ff_dropout_rate)
         self.W2Dropout = nn.Dropout(p=ff_dropout_rate)
 
-        self.path_encoder = nn.LSTM(input_size=self.action_dim,
+        self.path_encoder = nn.LSTM(input_size=self.input_dim,
                                     hidden_size=self.history_dim,
                                     num_layers=self.history_num_layers,
                                     batch_first=True)
         self.initialize_modules()
 
-        print('========================== MLPFeaturesExtractor ==========================')
-        print('_action_dim: ', self._action_dim)
-        print('_history_dim: ', self._history_dim)
-        print('_features_dim: ', self._features_dim)
-        print('_state_dim: ', self._state_dim)
-        print('_history_num_layers: ', self._history_num_layers)
-        print('_xavier_initialization: ', self._xavier_initialization)
-        print('ff_dropout_rate: ', ff_dropout_rate)
-
     @property
-    def action_dim(self) -> int:
-        return self._action_dim
+    def input_dim(self) -> int:
+        return self._input_dim
 
     @property
     def history_dim(self) -> int:
@@ -175,7 +166,7 @@ class MLPFeaturesExtractor(nn.Module):
         path_embeddings = self.get_action_embedding(path, kg)
         packed_path_embeddings = nn.utils.rnn.pack_padded_sequence(path_embeddings, path_length,
                                                                    batch_first=True, enforce_sorted=False)
-        _, (h, _) = self.path_encoder(packed_path_embeddings)  # action_dim -> history_dim
+        _, (h, _) = self.path_encoder(packed_path_embeddings)  # input_dim -> history_dim
         return h[-1]
 
     def forward(self, obs: Observation, kg) -> th.Tensor:

@@ -15,6 +15,7 @@ from src.pg.rs_pg import RewardShapingPolicyGradient
 from src.dqn.dqn import DQN
 from src.dqn.rs_dqn import RewardShapingDQN
 from src.dqn.rs_double_dqn import DoubleDQN
+from src.dqn.rs_duel_dqn import DuelDQN
 from src.reinforce.pg import REINFORCE
 from src.reinforce.pn import GraphSearchPolicy
 from src.reinforce.rs_pg import RewardShapingREINFORCE
@@ -146,7 +147,7 @@ def initialize_model_directory(args):
             args.remark
         )
     elif 'dqn' in args.model_name:
-        hyperparam_sig = '{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}'.format(
+        hyperparam_sig = '{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}'.format(
             args.baseline,
             args.entity_dim,
             args.relation_dim,
@@ -156,6 +157,7 @@ def initialize_model_directory(args):
             args.num_peek_epochs,
             args.history_num_layers,
             args.buffer_size,
+            args.n_critics,
             args.critic_learning_rate,
             args.emb_dropout_rate,
             args.ff_dropout_rate,
@@ -360,6 +362,8 @@ def construct_model(args):
             learning_starts=args.learning_starts,
             ff_dropout_rate=args.ff_dropout_rate,
             action_dropout_rate=args.action_dropout_rate,
+            action_dropout_final_rate=args.action_dropout_final_rate,
+            action_dropout_fraction=args.action_dropout_fraction,
             net_arch=args.net_arch,
             tau=args.tau,
             gamma=args.gamma,
@@ -404,6 +408,8 @@ def construct_model(args):
             learning_starts=args.learning_starts,
             ff_dropout_rate=args.ff_dropout_rate,
             action_dropout_rate=args.action_dropout_rate,
+            action_dropout_final_rate=args.action_dropout_final_rate,
+            action_dropout_fraction=args.action_dropout_fraction,
             net_arch=args.net_arch,
             tau=args.tau,
             gamma=args.gamma,
@@ -463,6 +469,53 @@ def construct_model(args):
             boltzmann_exploration=args.boltzmann_exploration,
             temperature=args.temperature,
             max_grad_norm=args.grad_norm,
+            xavier_initialization=args.xavier_initialization,
+            relation_only=args.relation_only,
+            beam_search_with_q_value=args.beam_search_with_q_value,
+            target_net_dropout=args.target_net_dropout,
+        )
+    elif args.model_name.startswith('rl.rs.duel.dqn'):
+        fn_model = args.model_name.split('.')[4]
+        fn_args = copy.deepcopy(args)
+        fn_args.model_name = fn_model
+        fn = ConvE(fn_args, kg.num_entities)
+        fn_kg = KnowledgeGraph(fn_args)
+        lf = DuelDQN(
+            args,
+            kg,
+            fn_kg,
+            fn,
+            entity_dim=args.entity_dim,
+            relation_dim=args.relation_dim,
+            history_dim=args.history_dim,
+            history_num_layers=args.history_num_layers,
+            learning_rate=args.critic_learning_rate,
+            lr_scheduler_step=args.lr_scheduler_step,
+            lr_decay_gamma=args.lr_decay_gamma,
+            buffer_size=args.buffer_size,
+            buffer_batch_size=args.buffer_batch_size,
+            magnification=args.magnification,
+            learning_starts=args.learning_starts,
+            ff_dropout_rate=args.ff_dropout_rate,
+            action_dropout_rate=args.action_dropout_rate,
+            action_dropout_final_rate=args.action_dropout_final_rate,
+            action_dropout_fraction=args.action_dropout_fraction,
+            reward_shaping_threshold=args.reward_shaping_threshold,
+            net_arch=args.net_arch,
+            tau=args.tau,
+            gamma=args.gamma,
+            train_freq=(args.train_freq_value, args.train_freq_unit),
+            gradient_steps=args.gradient_steps,
+            n_critics=args.n_critics,
+            target_update_interval=args.target_update_interval,
+            exploration_fraction=args.exploration_fraction,
+            exploration_initial_eps=args.exploration_initial_eps,
+            exploration_final_eps=args.exploration_final_eps,
+            boltzmann_exploration=args.boltzmann_exploration,
+            temperature=args.temperature,
+            max_grad_norm=args.grad_norm,
+            replay_buffer_class=args.replay_buffer_class,
+            policy_class=args.policy_class,
             xavier_initialization=args.xavier_initialization,
             relation_only=args.relation_only,
             beam_search_with_q_value=args.beam_search_with_q_value,

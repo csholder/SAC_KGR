@@ -9,7 +9,7 @@ import torch
 import torch as th
 
 from src.sac.policy import SACPolicy
-from src.dqn.policy import DQNPolicy
+from src.dqn.policy import DQNPolicy, DuelDQNPolicy
 from src.common.buffers import ReplayBuffer
 from src.common.common_class import TrainFreq, TrainFrequencyUnit, RolloutReturn, Observation
 from src.common.save_utils import save_to_pkl, load_from_pkl
@@ -194,6 +194,10 @@ class OffPolicyAlgorithm(LFramework):
             )
         elif self.policy_class == 'DQNPolicy':
             self.policy = DQNPolicy(
+                **self.policy_kwargs,
+            )
+        elif self.policy_class == 'DuelDQNPolicy':
+            self.policy = DuelDQNPolicy(
                 **self.policy_kwargs,
             )
         else:
